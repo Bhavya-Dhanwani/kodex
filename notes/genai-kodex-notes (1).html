@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generative AI & LLMs — KODEX Interactive Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,wght@0,300;0,600;0,700;0,900;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:       #0E0F14;
+  --paper:     #F5F2EB;
+  --paper2:    #EDE9DF;
+  --paper3:    #E4DFD3;
+  --rule:      #D4CEBC;
+  --muted:     #6B6455;
+  --accent:    #C84B1F;
+  --accent2:   #1A6B4A;
+  --accent3:   #1B4587;
+  --gold:      #B8860B;
+  --code-bg:   #1A1C24;
+  --code-text: #E2DCCC;
+  --pit:       #A63232;
+  --confuse:   #7A4FA3;
+  --ok:        #1A6B4A;
+  --bad:       #A63232;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* WATERMARK */
+body::before {
+  content: 'SHERYIANS CODING SCHOOL';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-35deg);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 42px;
+  font-weight: 600;
+  color: rgba(200, 75, 31, 0.045);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  letter-spacing: 0.12em;
+}
+
+/* ============ FIXED SIDEBAR LAYOUT (no flex on page shell) ============ */
+nav {
+  position: fixed;
+  top: 0; left: 0;
+  width: 278px;
+  height: 100vh;
+  background: var(--ink);
+  overflow-y: auto;
+  padding: 30px 0 40px;
+  z-index: 50;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+nav::-webkit-scrollbar { width: 4px; }
+nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+main {
+  display: block;
+  margin-left: 278px;
+  max-width: 860px;
+  padding: 56px 64px 160px;
+  position: relative;
+  z-index: 1;
+}
+main section {
+  display: block;
+  width: 100%;
+  margin-bottom: 68px;
+  scroll-margin-top: 24px;
+}
+
+.nav-brand { padding: 0 24px 26px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 18px; }
+.nav-brand .logo { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 700; color: white; }
+.nav-brand .logo span { color: var(--accent); }
+.nav-brand .sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; margin-top: 5px; }
+
+.nav-group-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+  padding: 16px 24px 8px;
+  text-transform: uppercase;
+}
+nav ul { list-style: none; }
+nav a {
+  display: block;
+  padding: 8px 24px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-size: 13px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+nav a:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.03); }
+nav a.active { color: white; border-left-color: var(--accent); background: rgba(200,75,31,0.08); font-weight: 500; }
+
+/* ============ TYPOGRAPHY ============ */
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 900;
+  font-size: 46px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.2;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 20px;
+  margin: 28px 0 12px;
+}
+p { margin-bottom: 14px; color: var(--ink); }
+p.lede { font-size: 17px; color: var(--muted); font-weight: 400; }
+strong { font-weight: 600; color: var(--ink); }
+a.inline-link { color: var(--accent3); text-decoration: underline; text-decoration-color: rgba(27,69,135,0.3); }
+ul.plain, ol.plain { padding-left: 22px; margin-bottom: 14px; }
+ul.plain li, ol.plain li { margin-bottom: 8px; }
+
+.section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* ============ HERO ============ */
+.hero {
+  padding-top: 8px;
+  margin-bottom: 84px !important;
+}
+.hero .tagline {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 18px;
+  letter-spacing: 0.02em;
+}
+.hero-rule { height: 1px; background: var(--rule); margin: 28px 0; }
+.hero-meta { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 18px; }
+.hero-meta-item { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+.hero-meta-item b { color: var(--ink); display: block; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; margin-top: 2px; }
+
+/* ============ DIVIDER ============ */
+.divider { display: flex; align-items: center; gap: 14px; margin: 40px 0; }
+.divider .line { flex: 1; height: 1px; background: var(--rule); }
+.divider .mark { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+
+/* ============ CONCEPT / CALLOUT BOXES ============ */
+.box {
+  border-left: 3px solid var(--accent2);
+  background: var(--paper2);
+  padding: 18px 22px;
+  margin: 20px 0;
+  border-radius: 0 6px 6px 0;
+}
+.box-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.box.concept { border-color: var(--accent2); }
+.box.concept .box-label { color: var(--accent2); }
+.box.note { border-color: var(--accent3); }
+.box.note .box-label { color: var(--accent3); }
+.box.warn { border-color: var(--gold); }
+.box.warn .box-label { color: var(--gold); }
+.box.pitfall { border-color: var(--pit); background: #F3E4E0; }
+.box.pitfall .box-label { color: var(--pit); }
+.box p:last-child { margin-bottom: 0; }
+
+/* ============ STEP LABEL ============ */
+.step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.step-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* ============ CODE BLOCK ============ */
+.code-wrap { margin: 18px 0; border-radius: 8px; overflow: hidden; background: var(--code-bg); }
+.code-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 16px; background: rgba(255,255,255,0.04);
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.4);
+}
+.code-head button {
+  background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.6);
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; padding: 4px 10px;
+  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.code-head button:hover { background: rgba(255,255,255,0.16); color: white; }
+pre { padding: 16px 18px; overflow-x: auto; }
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.65; }
+pre code { color: var(--code-text); }
+/* inline code — dark ink on light chip, always readable */
+p code, li code, td code, .box code, .seq-explain code, h3 code {
+  background: var(--paper3); color: var(--ink); padding: 2px 7px; border-radius: 4px;
+}
+
+/* ============ PROBABILITY BARS (prediction diagram) ============ */
+.prob-list { width: 100%; }
+.prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; width: 100%; }
+.prob-row:last-child { margin-bottom: 0; }
+.prob-token {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+  min-width: 72px; text-align: right; color: var(--ink);
+}
+.prob-bar-wrap { flex: 1; height: 20px; background: var(--paper3); border-radius: 4px; overflow: hidden; }
+.prob-bar { height: 100%; background: var(--accent3); border-radius: 4px; width: var(--w); }
+.seq-frame.active .prob-bar { animation: barGrow 0.7s ease both; }
+@keyframes barGrow { from { width: 0; } to { width: var(--w); } }
+.prob-pct { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); min-width: 44px; }
+.prob-row.winner .prob-bar { background: var(--accent2); }
+.prob-row.winner .prob-token { color: var(--accent2); }
+.prob-row.cut { opacity: 0.32; }
+.prob-row.cut .prob-bar { background: var(--muted); }
+
+/* diagram-style visual inside sequences */
+.seq-visual.diagram { display: block; }
+.seq-caption { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--muted); margin-top: 10px; letter-spacing: 0.03em; }
+.seq-token.alt { background: var(--accent3); }
+.seq-token.picked { background: var(--accent2); }
+.mini-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mini-flow .mf-box {
+  background: white; border: 1.5px solid var(--rule); border-radius: 6px;
+  padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+}
+.mini-flow .mf-box.hot { border-color: var(--accent); background: #F8EDE7; }
+.mini-flow .mf-arrow { color: var(--accent); font-size: 15px; }
+
+/* top-p nucleus line */
+.nucleus-line { border-top: 2px dashed var(--accent); margin: 10px 0 8px; position: relative; }
+.nucleus-line span {
+  position: absolute; right: 0; top: -9px; background: var(--paper2);
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--accent); padding: 0 6px;
+}
+.tk { color: #E2DCCC; }
+.tk-str { color: #B8D68C; }
+.tk-num { color: #E2A25A; }
+.tk-kw { color: #7BA7D9; }
+.tk-com { color: #6B7280; }
+
+/* ============ FLAG TABLE ============ */
+.flag-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.flag-table th {
+  text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 14px; border-bottom: 2px solid var(--rule);
+}
+.flag-table td { padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.flag-table tr:last-child td { border-bottom: none; }
+.flag-table td.flag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+/* ============ FLOW DIAGRAM ============ */
+.flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 24px 0; }
+.flow-step {
+  background: white; border: 1.5px solid var(--rule); border-radius: 8px;
+  padding: 12px 16px; font-size: 13px; text-align: center; flex: 1; min-width: 120px;
+}
+.flow-step .ft-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+.flow-step .ft-main { font-weight: 500; }
+.flow-arrow { color: var(--accent); font-size: 18px; flex-shrink: 0; }
+
+/* ============ QUIZ CARD (A/B, two options only) ============ */
+.quiz {
+  background: white; border: 1.5px solid var(--rule); border-radius: 10px;
+  padding: 22px 24px; margin: 26px 0;
+}
+.quiz-head { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; font-weight: 600; }
+.quiz-q { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.quiz-opt {
+  background: var(--paper2); border: 1.5px solid var(--rule); border-radius: 8px;
+  padding: 14px 16px; cursor: pointer; font-size: 13.5px; text-align: left;
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif; color: var(--ink);
+}
+.quiz-opt:hover { border-color: var(--accent3); background: #EAEFF6; }
+.quiz-opt.correct { background: #DCEEE2; border-color: var(--ok); }
+.quiz-opt.wrong { background: #F3DEDA; border-color: var(--bad); }
+.quiz-opt:disabled { cursor: default; }
+.quiz-feedback {
+  margin-top: 14px; padding: 14px 16px; border-radius: 8px; font-size: 13.5px;
+  display: none; line-height: 1.6;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.fb-correct { background: #DCEEE2; border-left: 3px solid var(--ok); }
+.quiz-feedback.fb-wrong { background: #F3DEDA; border-left: 3px solid var(--bad); }
+@media (max-width: 640px) { .quiz-options { grid-template-columns: 1fr; } }
+
+/* ============ SEQUENCE / STEPPER (forward + back animation) ============ */
+.sequence {
+  background: white; border: 1.5px solid var(--rule); border-radius: 10px;
+  padding: 24px 26px 20px; margin: 26px 0;
+}
+.seq-head { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent3); margin-bottom: 4px; font-weight: 600; }
+.seq-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.seq-progress { display: flex; gap: 5px; margin-bottom: 20px; }
+.seq-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--rule); transition: background 0.25s ease; }
+.seq-dot.done { background: var(--accent3); }
+.seq-stage {
+  min-height: 150px; position: relative; overflow: hidden;
+}
+.seq-frame {
+  display: none; animation: seqIn 0.32s ease;
+}
+.seq-frame.active { display: block; }
+@keyframes seqIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+.seq-step-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.seq-step-label b { color: var(--accent3); }
+.seq-visual {
+  background: var(--paper2); border-radius: 8px; padding: 18px 20px; margin-bottom: 12px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 46px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.seq-token {
+  background: var(--ink); color: var(--paper); padding: 4px 10px; border-radius: 5px;
+  font-size: 12px; animation: tokenPop 0.3s ease;
+}
+@keyframes tokenPop { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+.seq-explain { font-size: 13.5px; color: var(--ink); }
+.seq-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.seq-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+  background: var(--ink); color: white; border: none; padding: 9px 18px;
+  border-radius: 6px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em;
+}
+.seq-btn:hover { background: #2A2C36; }
+.seq-btn:disabled { background: var(--rule); color: var(--muted); cursor: not-allowed; }
+.seq-btn.ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--rule); }
+.seq-btn.ghost:hover { border-color: var(--ink); color: var(--ink); background: transparent; }
+.seq-counter { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+
+/* ============ SCALE / SLIDER DEMO ============ */
+.scale-demo { background: white; border: 1.5px solid var(--rule); border-radius: 10px; padding: 22px 24px; margin: 26px 0; }
+.scale-row { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+.scale-input { flex: 1; }
+.scale-val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent); min-width: 40px; text-align: right; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.scale-output { margin-top: 14px; padding: 14px 16px; background: var(--paper2); border-radius: 8px; font-size: 13.5px; min-height: 24px; }
+
+/* ============ COMPARE GRID ============ */
+.compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0; }
+.compare-card { background: white; border: 1.5px solid var(--rule); border-radius: 8px; padding: 16px; }
+.compare-card .cc-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+.compare-card p { font-size: 12.5px; margin-bottom: 6px; color: var(--muted); }
+.compare-card p:last-child { margin-bottom: 0; }
+@media (max-width: 720px) { .compare-grid { grid-template-columns: 1fr; } }
+
+/* ============ SCORE CHIP ============ */
+.score-chip {
+  position: fixed; bottom: 22px; right: 22px; z-index: 60;
+  background: var(--ink); color: white; padding: 10px 16px; border-radius: 30px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; display: flex; gap: 10px;
+  align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.score-chip .ok-c { color: #7EDCA0; } .score-chip .bad-c { color: #E89B8C; }
+
+/* ============ FOOTER ============ */
+footer { padding: 40px 0 20px; border-top: 1px solid var(--rule); margin-top: 60px; }
+footer .logo { font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px; }
+footer .logo span { color: var(--accent); }
+footer p { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* mobile nav toggle */
+.nav-toggle { display: none; }
+@media (max-width: 900px) {
+  nav { transform: translateX(-100%); transition: transform 0.2s ease; }
+  nav.open { transform: translateX(0); }
+  main { margin-left: 0; padding: 56px 24px 140px; }
+  .nav-toggle {
+    display: block; position: fixed; top: 16px; left: 16px; z-index: 70;
+    background: var(--ink); color: white; border: none; width: 40px; height: 40px;
+    border-radius: 8px; font-size: 16px; cursor: pointer;
+  }
+  .compare-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="nav-toggle" onclick="document.querySelector('nav').classList.toggle('open')">☰</button>
+
+<nav>
+  <div class="nav-brand">
+    <div class="logo">sheryians<span>.</span></div>
+    <div class="sub">KODEX · GENERATIVE AI</div>
+  </div>
+  <div class="nav-group-label">Foundations</div>
+  <ul>
+    <li><a href="#problem">01 · The problem GenAI solves</a></li>
+    <li><a href="#what-is-llm">02 · What is an LLM?</a></li>
+    <li><a href="#how-llm-works">03 · How an LLM works</a></li>
+    <li><a href="#message-journey">04 · Your message's journey</a></li>
+  </ul>
+  <div class="nav-group-label">Core Mechanics</div>
+  <ul>
+    <li><a href="#tokenization">05 · Tokenization</a></li>
+    <li><a href="#context-window">06 · Context window</a></li>
+    <li><a href="#temperature">07 · Temperature & top-p</a></li>
+  </ul>
+  <div class="nav-group-label">Using LLMs</div>
+  <ul>
+    <li><a href="#deployment">08 · Local, self-hosted, API</a></li>
+    <li><a href="#structured-output">09 · Structured output</a></li>
+    <li><a href="#langchain">10 · Why LangChain & LangGraph</a></li>
+  </ul>
+  <div class="nav-group-label">Wrap</div>
+  <ul>
+    <li><a href="#recap">11 · Recap</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section class="hero" id="top">
+  <span class="eyebrow">KODEX · Session Notes</span>
+  <h1>Generative AI & LLMs<br>— from first principles</h1>
+  <p class="tagline">why before what · problem before solution</p>
+  <div class="hero-rule"></div>
+  <p class="lede">Every framework you'll touch this week — LangChain, LangGraph, the Mistral API — is just scaffolding around one core machine: a model that predicts the next token. Understand that machine first, and every tool built on top of it stops feeling magical.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">STACK<b>MERN + LangChain/LangGraph + Mistral API</b></div>
+    <div class="hero-meta-item">FORMAT<b>Concepts → live quiz → next</b></div>
+    <div class="hero-meta-item">GOAL<b>Reason about LLMs, not just call them</b></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 1: THE PROBLEM ============ -->
+<section id="problem">
+  <span class="section-num">01 / 11</span>
+  <h2>The problem GenAI / LLMs solve</h2>
+  <p>Before "how it works" — ask why it exists at all. Every real technology is a response to a limitation of what came before.</p>
+
+  <p>Traditional software only does what you explicitly coded for. A weather app can't answer a question you didn't design a button for. A search engine finds documents containing your words — it doesn't understand what you meant, it doesn't generate anything new, and it can't write, summarize, or reason.</p>
+
+  <h3>A concrete example: the refund bot</h3>
+  <p>Imagine you're asked to build a customer-support bot for an e-commerce site. With traditional code, you'd write something like:</p>
+  <div class="mini-flow" style="margin: 16px 0;">
+    <div class="mf-box">if msg includes "refund"</div>
+    <div class="mf-arrow">→</div>
+    <div class="mf-box">send refund policy</div>
+  </div>
+  <p>Now a real user types: <em>"bhai order galat aa gaya, paise wapas kaise milenge?"</em> — no keyword "refund" anywhere. Your bot fails. You add "paise wapas". Then someone writes "money back". Then "return karna hai". You are now in an endless game of catching every possible phrasing — and you will always lose, because <strong>human language has infinite variations and your if-else has finite rules.</strong></p>
+  <p>An LLM flips this. It wasn't given rules — it learned from millions of real conversations what "asking for a refund" <em>looks like</em> in every phrasing, every language, every typo. The intent is understood, not keyword-matched. That's the problem being solved: <strong>software that handles language it was never explicitly programmed for.</strong></p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 the actual gap</div>
+    <p>Computers were always good at <strong>storing and retrieving</strong> information. They were never good at <strong>producing language, understanding intent, or generalizing to new situations</strong> they weren't explicitly programmed for.</p>
+  </div>
+
+  <p>An LLM (Large Language Model) is the first widely usable tool that closes that gap. It isn't a database of answers — it's a model of <strong>how language works</strong>, trained on enough text that it can produce new, coherent, contextually appropriate text for situations it has never literally seen before.</p>
+
+  <h3>What actually changed</h3>
+  <table class="flag-table">
+    <tr><th>Before</th><th>Now, with an LLM</th></tr>
+    <tr><td>Rule-based chatbots — rigid decision trees, break on unexpected phrasing</td><td>Understands intent even in messy, unstructured natural language</td></tr>
+    <tr><td>Search returns documents; you read and synthesize</td><td>Synthesizes an answer directly from what it has learned</td></tr>
+    <tr><td>Every new task needs new code</td><td>One model generalizes across writing, coding, summarizing, reasoning</td></tr>
+  </table>
+
+  <div class="box note">
+    <div class="box-label">📌 the one-line definition</div>
+    <p>GenAI doesn't retrieve pre-written answers — it <strong>generates</strong> new content, token by token, based on patterns learned from massive amounts of text.</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">A traditional search engine and an LLM both take a text query. What's the core difference in what they give back?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Search engine generates new sentences; LLM only returns links</button>
+      <button class="quiz-opt" data-correct="true">Search engine returns existing documents; LLM generates new text</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 2: WHAT IS AN LLM ============ -->
+<section id="what-is-llm">
+  <span class="section-num">02 / 11</span>
+  <h2>What is an LLM?</h2>
+  <p>Before opening the machine, name it properly. LLM = <strong>Large Language Model</strong>. All three words carry weight:</p>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <div class="cc-label">Large</div>
+      <p>Billions of internal parameters (adjustable numbers), trained on trillions of tokens of text — books, code, websites, conversations.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">Language</div>
+      <p>Its entire world is text. It reads text, it writes text. Anything expressible as text — code, JSON, essays, Hinglish — is fair game.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">Model</div>
+      <p>Not a database, not a search engine — a mathematical function. Input goes in, probabilities come out. It stores patterns, not pages.</p>
+    </div>
+  </div>
+
+  <div class="box concept">
+    <div class="box-label">🎯 the simplest honest description</div>
+    <p>An LLM is <strong>autocomplete, scaled up to an extreme</strong>. Your phone keyboard predicts the next word from your last few words. An LLM predicts the next token from everything in its context window — and it learned its predictions from a large portion of all text ever written. Same idea, radically different scale, and at that scale something new emerges: coherent reasoning-like behavior.</p>
+  </div>
+
+  <div class="box note">
+    <div class="box-label">📌 model vs product — don't confuse them</div>
+    <p>ChatGPT is a <strong>product</strong>; GPT is the <strong>model</strong> inside it. Le Chat is the product; Mistral is the model. In this course you're on the other side of that relationship — <em>you</em> build the product (MERN app), and the model sits behind an API you call.</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">Where does an LLM's answer come from when you ask it a question?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">It searches a stored database of documents and picks the best match</button>
+      <button class="quiz-opt" data-correct="true">It generates text from learned patterns — nothing is looked up</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: HOW LLM WORKS (overview) ============ -->
+<section id="how-llm-works">
+  <span class="section-num">03 / 11</span>
+  <h2>How an LLM works — the big picture</h2>
+  <p>Strip away the branding, and every LLM — GPT, Claude, Mistral, LLaMA — does exactly one job on repeat:</p>
+
+  <div class="box concept">
+    <div class="box-label">⚙️ the entire mechanism</div>
+    <p>Given the text so far, predict the <strong>single most likely next token</strong>. Add it. Repeat. That's it. There is no separate "understanding module" — understanding is an emergent side effect of getting extremely good at next-token prediction over trillions of words.</p>
+  </div>
+
+  <p>Watch the loop actually run. The bars are the model's probability scores for what comes next:</p>
+
+  <div class="sequence" data-sequence>
+    <div class="seq-head">Animated diagram</div>
+    <div class="seq-title">Predicting: "The cat sat on the ___"</div>
+    <div class="seq-progress" data-progress></div>
+    <div class="seq-stage" data-stage>
+
+      <div class="seq-frame active">
+        <div class="seq-step-label"><b>Step 1</b> · The model scores every possible next token</div>
+        <div class="seq-visual diagram">
+          <div class="prob-list">
+            <div class="prob-row"><span class="prob-token">mat</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:62%"></div></div><span class="prob-pct">62%</span></div>
+            <div class="prob-row"><span class="prob-token">floor</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:21%"></div></div><span class="prob-pct">21%</span></div>
+            <div class="prob-row"><span class="prob-token">sofa</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:9%"></div></div><span class="prob-pct">9%</span></div>
+            <div class="prob-row"><span class="prob-token">moon</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:1%"></div></div><span class="prob-pct">0.4%</span></div>
+          </div>
+          <div class="seq-caption">— it does this for its ENTIRE vocabulary (~32,000+ tokens), all at once</div>
+        </div>
+        <div class="seq-explain">The model doesn't "know" the answer. It assigns a probability to <em>every token it has</em>, based on all the patterns it learned. "mat" wins here because "cat sat on the mat" appeared endlessly in training text.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 2</b> · The winner is picked and appended</div>
+        <div class="seq-visual diagram">
+          <div class="prob-list">
+            <div class="prob-row winner"><span class="prob-token">mat ✓</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:62%"></div></div><span class="prob-pct">62%</span></div>
+          </div>
+          <div class="mini-flow" style="margin-top:12px;">
+            <div class="mf-box">The cat sat on the</div>
+            <div class="mf-arrow">+</div>
+            <div class="mf-box hot">mat</div>
+          </div>
+        </div>
+        <div class="seq-explain">One token is chosen (how exactly it's chosen — always the top one, or with some randomness — is what <strong>temperature</strong> controls, coming up in section 07). It's glued onto the sequence.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 3</b> · The loop runs again on the NEW sequence</div>
+        <div class="seq-visual diagram">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:12px;">"The cat sat on the mat ___"</div>
+          <div class="prob-list">
+            <div class="prob-row"><span class="prob-token">.</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:58%"></div></div><span class="prob-pct">58%</span></div>
+            <div class="prob-row"><span class="prob-token">and</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:17%"></div></div><span class="prob-pct">17%</span></div>
+            <div class="prob-row"><span class="prob-token">,</span><div class="prob-bar-wrap"><div class="prob-bar" style="--w:11%"></div></div><span class="prob-pct">11%</span></div>
+          </div>
+        </div>
+        <div class="seq-explain">Notice: the input now <em>includes the token the model itself just generated</em>. Every new token changes the probabilities for the next one. This is why LLM output feels coherent — each word is conditioned on all the words before it.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 4</b> · Repeat until a stop signal</div>
+        <div class="seq-visual diagram">
+          <div class="mini-flow">
+            <div class="mf-box">predict</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box">append</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box">predict</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box">append</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box hot">⏹ stop token</div>
+          </div>
+          <div class="seq-caption">— a 500-word answer = this loop running ~650 times</div>
+        </div>
+        <div class="seq-explain">Generation ends when the model predicts a special <strong>stop token</strong> (or hits a max-length limit). That entire essay ChatGPT wrote you? Just this loop, thousands of times, fast.</div>
+      </div>
+
+    </div>
+    <div class="seq-nav">
+      <button class="seq-btn ghost" data-prev disabled>← Back</button>
+      <span class="seq-counter"><span data-current>1</span> / <span data-total>4</span></span>
+      <button class="seq-btn" data-next>Next →</button>
+    </div>
+  </div>
+
+  <p>That one idea explains almost everything you'll learn today. Three building blocks control how that prediction loop behaves in practice — we'll open each one:</p>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <div class="cc-label">Tokens</div>
+      <p>The units the model actually reads and writes. Not words — pieces of words.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">Context window</div>
+      <p>How much text (yours + its own past output) the model can "see" at once.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">Temperature</div>
+      <p>How much randomness is allowed when picking the next token.</p>
+    </div>
+  </div>
+  <div class="box warn">
+    <div class="box-label">⚠ and one failure mode</div>
+    <p><strong>Hallucination</strong> — because the model is always predicting "what token sounds right next," not looking up "what is factually true," it can produce fluent, confident, completely wrong answers. This isn't a bug that gets patched out — it's a direct consequence of how prediction-based generation works.</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">Why do LLMs hallucinate confident wrong answers instead of saying "I don't know"?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">The model is retrieving from a corrupted database</button>
+      <button class="quiz-opt" data-correct="true">It's predicting the next likely token, not verifying facts</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: MESSAGE JOURNEY (sequence) ============ -->
+<section id="message-journey">
+  <span class="section-num">04 / 11</span>
+  <h2>What happens when you send a message</h2>
+  <p>You type "Explain closures in JS" and hit enter. Before the model writes a single word back, five things happen. Step through it forward and back.</p>
+
+  <div class="sequence" data-sequence>
+    <div class="seq-head">Walkthrough</div>
+    <div class="seq-title">One message, five steps</div>
+    <div class="seq-progress" data-progress></div>
+    <div class="seq-stage" data-stage>
+
+      <div class="seq-frame active">
+        <div class="seq-step-label"><b>Step 1</b> · Your text arrives</div>
+        <div class="seq-visual">"Explain closures in JS"</div>
+        <div class="seq-explain">Your raw message reaches the model's API as plain text — a string, nothing more. At this point it's just characters; the model can't do math on characters.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 2</b> · Tokenization — and it's not word-by-word</div>
+        <div class="seq-visual diagram">
+          <div class="mini-flow" style="margin-bottom:12px;">
+            <div class="mf-box">"Explain closures in JS"</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box hot">tokenizer</div>
+          </div>
+          <div>
+            <span class="seq-token">Explain</span><span class="seq-token alt">&nbsp;clos</span><span class="seq-token">ures</span><span class="seq-token alt">&nbsp;in</span><span class="seq-token">&nbsp;JS</span>
+          </div>
+          <div class="seq-caption">— 4 words became 5 tokens. "closures" split into " clos" + "ures" because it's a rarer word</div>
+        </div>
+        <div class="seq-explain">The text is chopped into <strong>tokens</strong> — subword chunks, not whole words. Common words survive intact; rarer ones get split. The spaces are part of the tokens too (notice " clos" carries its leading space). Full deep-dive in the next section.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 3</b> · Placed in the context window</div>
+        <div class="seq-visual diagram">
+          <div class="mini-flow">
+            <div class="mf-box">system prompt</div>
+            <div class="mf-arrow">+</div>
+            <div class="mf-box">chat history</div>
+            <div class="mf-arrow">+</div>
+            <div class="mf-box hot">your new tokens</div>
+          </div>
+          <div class="seq-caption">— one flat sequence. the model sees ALL of it, every single time</div>
+        </div>
+        <div class="seq-explain">Your tokens are appended to everything else the model needs to see: system instructions, and the earlier turns of this conversation — all packed into one sequence, the <strong>context window</strong>.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 4</b> · Next-token prediction loop</div>
+        <div class="seq-visual diagram">
+          <div>
+            <span class="seq-token picked">A</span><span class="seq-token picked">&nbsp;closure</span><span class="seq-token picked">&nbsp;is</span><span class="seq-token picked">&nbsp;a</span><span class="seq-token picked">&nbsp;function</span><span class="seq-token" style="background:var(--paper3);color:var(--muted);">&nbsp;?</span>
+          </div>
+          <div class="seq-caption">— each green token was itself a prediction, one at a time, left to right</div>
+        </div>
+        <div class="seq-explain">The model looks at the entire sequence so far and predicts the single most probable next token. That token gets appended, and the model predicts again. And again. This loop <em>is</em> generation — you saw it bar-by-bar in section 03.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 5</b> · Streamed back to you</div>
+        <div class="seq-visual diagram">
+          <div class="mini-flow">
+            <div class="mf-box">token IDs</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box">decoded to text</div>
+            <div class="mf-arrow">→</div>
+            <div class="mf-box hot">"A closure is a function that remembers..." ▍</div>
+          </div>
+        </div>
+        <div class="seq-explain">Tokens are converted back to text and streamed to your screen the moment they're generated — that's why answers appear word-by-word instead of all at once.</div>
+      </div>
+
+    </div>
+    <div class="seq-nav">
+      <button class="seq-btn ghost" data-prev disabled>← Back</button>
+      <span class="seq-counter"><span data-current>1</span> / <span data-total>5</span></span>
+      <button class="seq-btn" data-next>Next →</button>
+    </div>
+  </div>
+
+  <div class="box note">
+    <div class="box-label">📌 the takeaway</div>
+    <p>Every product feature you'll build — chat UI, streaming responses, "typing" indicators — is a UI wrapper around this exact five-step loop.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: TOKENIZATION ============ -->
+<section id="tokenization">
+  <span class="section-num">05 / 11</span>
+  <h2>Tokenization — how text becomes numbers</h2>
+  <p>Neural networks only do one thing at their core: matrix multiplication on numbers. They cannot "read" the letter A. So before anything else, all text has to become numbers.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 why not just use whole words?</div>
+    <p>English has hundreds of thousands of words, plus names, typos, code, and every other language. A word-level vocabulary would be enormous and still miss words it's never seen. So models split text into <strong>subword tokens</strong> — common chunks that can be recombined to represent literally any string, even made-up ones.</p>
+  </div>
+
+  <p>A token is typically <strong>~4 characters / ~¾ of an English word</strong>. Common words are often a single token ("the", "cat"). Rare or technical words get split into pieces ("tokenization" → "token" + "ization"). This is why LLM pricing and limits are measured in tokens, not words or characters.</p>
+
+  <div class="sequence" data-sequence>
+    <div class="seq-head">Walkthrough</div>
+    <div class="seq-title">"Tokenization is powerful" → numbers</div>
+    <div class="seq-progress" data-progress></div>
+    <div class="seq-stage" data-stage>
+
+      <div class="seq-frame active">
+        <div class="seq-step-label"><b>Step 1</b> · Raw string</div>
+        <div class="seq-visual">"Tokenization is powerful"</div>
+        <div class="seq-explain">This is what you typed. To a computer, right now, it's just a sequence of bytes.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 2</b> · Split into subword chunks</div>
+        <div class="seq-visual">
+          <span class="seq-token">Token</span><span class="seq-token">ization</span><span class="seq-token">&nbsp;is</span><span class="seq-token">&nbsp;powerful</span>
+        </div>
+        <div class="seq-explain">Notice "Tokenization" splits into two pieces (it's a less common word) while "powerful" stays whole. The splitting rule is learned from data ahead of time — it's called the tokenizer's vocabulary.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 3</b> · Each chunk → a fixed ID</div>
+        <div class="seq-visual">
+          <span class="seq-token">14827</span><span class="seq-token">2872</span><span class="seq-token">318</span><span class="seq-token">6787</span>
+        </div>
+        <div class="seq-explain">Every possible token has a fixed number in the model's vocabulary (often 30,000–130,000 entries). "Tokenization is powerful" is now just <code>[14827, 2872, 318, 6787]</code>.</div>
+      </div>
+
+      <div class="seq-frame">
+        <div class="seq-step-label"><b>Step 4</b> · IDs become vectors</div>
+        <div class="seq-visual">14827 → [0.02, -0.41, 0.88, …]</div>
+        <div class="seq-explain">Each ID is looked up in an embedding table and turned into a long list of numbers (a vector) that captures meaning. <em>This</em> is the actual math the model operates on — everything before this step was just preprocessing.</div>
+      </div>
+
+    </div>
+    <div class="seq-nav">
+      <button class="seq-btn ghost" data-prev disabled>← Back</button>
+      <span class="seq-counter"><span data-current>1</span> / <span data-total>4</span></span>
+      <button class="seq-btn" data-next>Next →</button>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <div class="box-label">⚠ practical consequence</div>
+    <p>Because you pay and are limited by <strong>tokens</strong>, not words: roughly, 1,000 English words ≈ 1,300 tokens. Code, Hindi, and other non-English scripts often tokenize <em>less</em> efficiently — more tokens for the same visible text.</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">Why do LLMs use subword tokens instead of whole words as the basic unit?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Subwords are faster for humans to read on screen</button>
+      <button class="quiz-opt" data-correct="true">A fixed vocabulary of subwords can represent any word, even unseen ones</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: CONTEXT WINDOW ============ -->
+<section id="context-window">
+  <span class="section-num">06 / 11</span>
+  <h2>Context window — what the model can "see"</h2>
+  <p>An LLM has no memory between separate API calls. It doesn't remember your last message because it "recalls" it — it remembers because <strong>you (or your app) sent the entire conversation again</strong>, every single time.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 the mental model</div>
+    <p>The context window is a fixed-size box. Everything the model uses to generate its next token — system prompt, chat history, your latest message, any documents you pasted — has to fit inside that one box, measured in tokens. Mistral Large, for example, ships a 128K-token window.</p>
+  </div>
+
+  <h3>What happens when you exceed it</h3>
+  <p>You can't send more tokens than the window allows. When a long conversation approaches the limit, applications typically do one of these:</p>
+  <table class="flag-table">
+    <tr><th>Strategy</th><th>What it does</th></tr>
+    <tr><td class="flag">TRUNCATE</td><td>Drop the oldest messages to make room for new ones — the model "forgets" the start of the conversation</td></tr>
+    <tr><td class="flag">SUMMARIZE</td><td>Periodically compress old messages into a short summary, keep that instead of the full text</td></tr>
+    <tr><td class="flag">RETRIEVE (RAG)</td><td>Store everything externally, pull back only the relevant pieces for each new message</td></tr>
+  </table>
+
+  <div class="box pitfall">
+    <div class="box-label">✕ common confusion</div>
+    <p>A bigger context window is not the same as memory across sessions. Close the chat and open a new one — even with a 1M-token window, it starts empty unless your app explicitly re-sends prior context.</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">You're building a chatbot and the conversation is getting long. What's actually happening under the hood on every new message?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">The model recalls earlier messages from its own memory</button>
+      <button class="quiz-opt" data-correct="true">Your backend resends the whole conversation history each time</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: TEMPERATURE & TOP-P ============ -->
+<section id="temperature">
+  <span class="section-num">07 / 11</span>
+  <h2>Temperature, top-p, and controlling randomness</h2>
+  <p>At every step, the model doesn't pick just one "correct" next token — it computes a <strong>probability for every token in its vocabulary</strong>. "The sky is ___" might give <code>blue (71%)</code>, <code>clear (12%)</code>, <code>falling (0.4%)</code>, and thousands more, all at once. Something has to decide which one actually gets picked.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 temperature = how much risk to take</div>
+    <p><strong>Low temperature (≈0–0.3):</strong> almost always pick the highest-probability token → focused, repeatable, safe answers. <strong>High temperature (≈0.8–1.2):</strong> lower-probability tokens get a real chance → creative, varied, sometimes weirder answers.</p>
+  </div>
+
+  <div class="scale-demo">
+    <div class="seq-head" style="color:var(--accent);">Try it</div>
+    <div class="seq-title" style="margin-bottom:14px;">Prompt: "The weather today is"</div>
+    <div class="scale-row">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;">temp</span>
+      <div class="scale-input"><input type="range" min="0" max="12" value="2" step="1" id="tempSlider"></div>
+      <div class="scale-val" id="tempVal">0.2</div>
+    </div>
+    <div class="scale-output" id="tempOutput">"The weather today is sunny with a light breeze."</div>
+  </div>
+
+  <h3>Top-p (nucleus sampling) — the other lever</h3>
+  <p>Top-p works alongside temperature. Instead of considering the entire vocabulary, it narrows the field first: keep only the smallest set of tokens whose combined probability adds up to <code>p</code> (e.g. 0.9 = top 90% of probability mass), then sample from just that shortlist. It's a smarter cutoff than "always consider every token."</p>
+
+  <div class="scale-demo">
+    <div class="seq-head" style="color:var(--accent);">Try it</div>
+    <div class="seq-title" style="margin-bottom:4px;">Prompt: "The sky is ___" — drag top-p, watch the shortlist shrink</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Solid tokens are inside the nucleus — still in the running. Faded ones are cut and can never be picked, no matter how high the temperature.</p>
+    <div class="scale-row">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;">top_p</span>
+      <div class="scale-input"><input type="range" min="1" max="10" value="9" step="1" id="topPSlider"></div>
+      <div class="scale-val" id="topPVal">0.9</div>
+    </div>
+    <div style="margin-top:16px;" class="prob-list" id="topPList"></div>
+    <div class="scale-output" id="topPSummary" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <div class="cc-label">Low temp + low top-p</div>
+      <p>Code generation, data extraction, JSON output — you want the same correct answer every time.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">High temp + high top-p</div>
+      <p>Brainstorming, story writing, marketing copy — variety is the point.</p>
+    </div>
+    <div class="compare-card">
+      <div class="cc-label">Temp = 0</div>
+      <p>As close to deterministic as it gets — always the single most probable token.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">You're building a feature that extracts structured JSON from invoices. What temperature setting fits best?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">Low (near 0) — you want the same correct structure every time</button>
+      <button class="quiz-opt" data-correct="false">High (near 1) — more creative extraction finds more fields</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: LOCAL / SELF-HOSTED / API ============ -->
+<section id="deployment">
+  <span class="section-num">08 / 11</span>
+  <h2>How we use LLMs — local, self-hosted, or API</h2>
+  <p>The model itself is the same idea everywhere. What changes is <strong>who runs the weights, and where.</strong></p>
+
+  <table class="flag-table">
+    <tr><th>Approach</th><th>What it means</th><th>Trade-off</th></tr>
+    <tr><td class="flag">LOCAL</td><td>Model runs on your own machine (e.g. via Ollama, LM Studio) — a small open model like Llama or Qwen</td><td>Free, private, offline — but limited by your hardware and generally weaker than frontier models</td></tr>
+    <tr><td class="flag">SELF-HOSTED</td><td>You deploy an open-weight model on your own servers/cloud (e.g. on your AWS EKS cluster)</td><td>Full control, data never leaves your infra — but you own the GPU cost, scaling, and uptime</td></tr>
+    <tr><td class="flag">API</td><td>You call someone else's hosted model over HTTP — Mistral, OpenAI, Anthropic — pay per token</td><td>Zero infra, best models, instant scale — but you depend on their uptime, pricing, and data policy</td></tr>
+  </table>
+
+  <div class="box note">
+    <div class="box-label">📌 what we use in this course</div>
+    <p>We build on the <strong>Mistral API</strong> — no GPU to manage, frontier-quality models, and a generous free tier. This is also the most common pattern you'll meet in real MERN jobs: your Express backend makes an HTTP call to a hosted model, exactly like calling any other third-party API.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step"><div class="ft-label">your app</div><div class="ft-main">Express backend</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="ft-label">https</div><div class="ft-main">Mistral API</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="ft-label">response</div><div class="ft-main">JSON back to your server</div></div>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">Your startup has no GPU budget and needs to ship fast with the strongest possible model. Which approach fits?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Self-hosted — deploy an open model on your own EKS cluster</button>
+      <button class="quiz-opt" data-correct="true">API — call a hosted model like Mistral over HTTP</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 8: STRUCTURED OUTPUT ============ -->
+<section id="structured-output">
+  <span class="section-num">09 / 11</span>
+  <h2>Structured output</h2>
+  <p>An LLM's natural output is free-flowing text. That's great for a chat bubble — and useless if your Express route needs to save <code>{ name, price, category }</code> to MongoDB.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 the problem it solves</div>
+    <p>You can't reliably <code>JSON.parse()</code> a sentence like "Sure! Here's the product info you asked for: ...". <strong>Structured output</strong> forces the model to respond in a schema you define — usually JSON — so your code can consume it directly, no fragile string-parsing.</p>
+  </div>
+
+  <p>Two common ways to get there:</p>
+  <table class="flag-table">
+    <tr><th>Method</th><th>How it works</th></tr>
+    <tr><td class="flag">PROMPTING</td><td>You instruct the model in plain English: "Respond only with valid JSON matching this shape: {...}" — works, but the model can still slip and add stray text</td></tr>
+    <tr><td class="flag">SCHEMA-ENFORCED</td><td>You pass an actual JSON Schema / Zod schema to the API. The model is constrained at generation time to only produce tokens that form valid output — far more reliable</td></tr>
+  </table>
+
+  <div class="box warn">
+    <div class="box-label">⚠ why this matters for MERN</div>
+    <p>Every real feature — "extract fields from this resume," "classify this support ticket," "generate a product description object" — needs structured output. This is the bridge between "the model can talk" and "the model can actually integrate into your backend."</p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">You need an LLM's output to reliably plug into your Express route without breaking on stray text. What's the more robust approach?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Ask nicely in the prompt and hope the format holds</button>
+      <button class="quiz-opt" data-correct="true">Pass a schema the API enforces at generation time</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 9: LANGCHAIN & LANGGRAPH ============ -->
+<section id="langchain">
+  <span class="section-num">10 / 11</span>
+  <h2>Why and how we use LangChain & LangGraph</h2>
+  <p>You could call the Mistral API directly with <code>fetch()</code>. For a single call, that's fine. The moment you need memory, tools, retries, multiple steps, or multiple models working together — hand-rolling all of that gets messy fast.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 the problem LangChain solves</div>
+    <p>LangChain is a set of reusable building blocks — prompts, memory, output parsers, tool-calling, retrieval — so you're not reimplementing "keep conversation history" or "parse this into JSON" from scratch on every project. Same idea as Express giving you routing/middleware instead of raw Node <code>http</code>.</p>
+  </div>
+
+  <div class="box note">
+    <div class="box-label">📌 the problem LangGraph solves</div>
+    <p>Real GenAI features aren't one call — they're a flow: "check intent → maybe call a tool → maybe loop back → then answer." LangChain alone is mostly linear (a chain). <strong>LangGraph</strong> lets you model this as an actual graph — nodes and edges, with conditionals and loops — which is what agents genuinely need.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step"><div class="ft-label">raw</div><div class="ft-main">fetch() to Mistral</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="ft-label">structured</div><div class="ft-main">LangChain: prompts + memory + parsing</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="ft-label">complex flow</div><div class="ft-main">LangGraph: branching, looping agents</div></div>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <div class="quiz-head">Quick check</div>
+    <div class="quiz-q">Your feature needs the model to decide "call a tool, then loop back and re-check," not just answer once. What fits better?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Plain LangChain chain — chains handle branching fine</button>
+      <button class="quiz-opt" data-correct="true">LangGraph — built for conditional, looping flows</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ RECAP ============ -->
+<section id="recap">
+  <span class="section-num">11 / 11</span>
+  <h2>Recap</h2>
+  <div class="divider"><div class="line"></div><div class="mark">the whole session in one loop</div><div class="line"></div></div>
+  <p class="lede">An LLM turns your text into tokens, fits them in a context window, predicts the next token over and over (shaped by temperature/top-p), and streams the result back — optionally forced into a schema, optionally orchestrated by LangChain/LangGraph, optionally run locally, self-hosted, or via API.</p>
+
+  <div class="box concept">
+    <div class="box-label">🎯 one thing to remember above all</div>
+    <p>Nothing here is magic. It's next-token prediction, at scale, with a few dials (temperature, top-p, context) that control its behavior. Everything you build on top — chatbots, agents, structured extraction — is engineering around that one loop.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">sheryians<span>.</span></div>
+  <p>KODEX · GENERATIVE AI & LLMS · SESSION NOTES</p>
+</footer>
+
+</main>
+
+<div class="score-chip" id="scoreChip">
+  <span>score</span>
+  <span class="ok-c">✓ <span id="okCount">0</span></span>
+  <span class="bad-c">✕ <span id="badCount">0</span></span>
+</div>
+
+<script>
+// ============ SCROLL-SPY NAV ============
+const sections = document.querySelectorAll('main section[id]');
+const navLinks = document.querySelectorAll('nav a');
+const spyObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+sections.forEach(s => spyObserver.observe(s));
+
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 900) document.querySelector('nav').classList.remove('open');
+  });
+});
+
+// ============ QUIZ LOGIC (two-option, instant feedback) ============
+let okCount = 0, badCount = 0;
+document.querySelectorAll('[data-quiz]').forEach(quiz => {
+  const opts = quiz.querySelectorAll('.quiz-opt');
+  const feedback = quiz.querySelector('.quiz-feedback');
+  opts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quiz.dataset.answered) return;
+      quiz.dataset.answered = 'true';
+      const isCorrect = opt.dataset.correct === 'true';
+      opts.forEach(o => {
+        o.disabled = true;
+        if (o.dataset.correct === 'true') o.classList.add('correct');
+        else if (o === opt) o.classList.add('wrong');
+      });
+      feedback.classList.add('show');
+      if (isCorrect) {
+        feedback.classList.add('fb-correct');
+        feedback.innerHTML = '✓ Correct — ' + (opt.dataset.explain || 'exactly right.');
+        okCount++;
+      } else {
+        feedback.classList.add('fb-wrong');
+        const correctOpt = quiz.querySelector('[data-correct="true"]');
+        feedback.innerHTML = '✕ Not quite — the answer is: "' + correctOpt.textContent + '"';
+        badCount++;
+      }
+      document.getElementById('okCount').textContent = okCount;
+      document.getElementById('badCount').textContent = badCount;
+    });
+  });
+});
+
+// ============ SEQUENCE STEPPER (forward/back) ============
+document.querySelectorAll('[data-sequence]').forEach(seq => {
+  const frames = seq.querySelectorAll('.seq-frame');
+  const progressWrap = seq.querySelector('[data-progress]');
+  const prevBtn = seq.querySelector('[data-prev]');
+  const nextBtn = seq.querySelector('[data-next]');
+  const currentEl = seq.querySelector('[data-current]');
+  const totalEl = seq.querySelector('[data-total]');
+  let current = 0;
+  const total = frames.length;
+  totalEl.textContent = total;
+
+  // build progress dots
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'seq-dot' + (i === 0 ? ' done' : '');
+    progressWrap.appendChild(dot);
+  }
+  const dots = progressWrap.querySelectorAll('.seq-dot');
+
+  function render() {
+    frames.forEach((f, i) => f.classList.toggle('active', i === current));
+    dots.forEach((d, i) => d.classList.toggle('done', i <= current));
+    currentEl.textContent = current + 1;
+    prevBtn.disabled = current === 0;
+    nextBtn.textContent = current === total - 1 ? 'Restart ⟲' : 'Next →';
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (current > 0) { current--; render(); }
+  });
+  nextBtn.addEventListener('click', () => {
+    if (current === total - 1) { current = 0; }
+    else { current++; }
+    render();
+  });
+  render();
+});
+
+// ============ TEMPERATURE SLIDER DEMO ============
+const tempSlider = document.getElementById('tempSlider');
+const tempVal = document.getElementById('tempVal');
+const tempOutput = document.getElementById('tempOutput');
+if (tempSlider) {
+  const responses = [
+    { max: 2,  text: '"The weather today is sunny with a light breeze."' },
+    { max: 4,  text: '"The weather today is pleasant, mild, and mostly clear."' },
+    { max: 6,  text: '"The weather today is calm — a soft golden light over cool, breezy streets."' },
+    { max: 9,  text: '"The weather today is playing hooky from winter, all lazy sun and mischief."' },
+    { max: 12, text: '"The weather today is a jazz solo the sky decided to improvise, unpredictable and a little unhinged."' }
+  ];
+  function updateTemp() {
+    const v = parseInt(tempSlider.value, 10);
+    tempVal.textContent = (v / 10).toFixed(1);
+    const match = responses.find(r => v <= r.max);
+    tempOutput.textContent = match.text;
+  }
+  tempSlider.addEventListener('input', updateTemp);
+  updateTemp();
+}
+
+// ============ TOP-P NUCLEUS DEMO ============
+const topPSlider = document.getElementById('topPSlider');
+if (topPSlider) {
+  const topPVal = document.getElementById('topPVal');
+  const topPList = document.getElementById('topPList');
+  const topPSummary = document.getElementById('topPSummary');
+  // fixed distribution for "The sky is ___" (sorted by probability)
+  const dist = [
+    { t: 'blue',    p: 0.58 },
+    { t: 'clear',   p: 0.17 },
+    { t: 'dark',    p: 0.10 },
+    { t: 'grey',    p: 0.07 },
+    { t: 'falling', p: 0.04 },
+    { t: 'orange',  p: 0.03 },
+    { t: 'angry',   p: 0.01 }
+  ];
+  function renderTopP() {
+    const p = parseInt(topPSlider.value, 10) / 10;
+    topPVal.textContent = p.toFixed(1);
+    let cumulative = 0;
+    let kept = 0;
+    let html = '';
+    dist.forEach(d => {
+      // token is in the nucleus if the cumulative mass BEFORE it is still below p
+      const inNucleus = cumulative < p;
+      cumulative += d.p;
+      if (inNucleus) kept++;
+      const pct = Math.round(d.p * 100);
+      html += '<div class="prob-row' + (inNucleus ? '' : ' cut') + '">'
+        + '<span class="prob-token">' + d.t + '</span>'
+        + '<div class="prob-bar-wrap"><div class="prob-bar" style="--w:' + pct + '%; width:' + pct + '%;"></div></div>'
+        + '<span class="prob-pct">' + pct + '%</span>'
+        + '</div>';
+    });
+    topPList.innerHTML = html;
+    if (kept === 1) {
+      topPSummary.textContent = 'Only "blue" survives — the output is now fully predictable, regardless of temperature.';
+    } else if (kept <= 3) {
+      topPSummary.textContent = kept + ' tokens in the nucleus — safe variety. Weird options like "falling" and "angry" are cut before sampling even begins.';
+    } else if (kept <= 5) {
+      topPSummary.textContent = kept + ' tokens in the running — noticeably more varied, still mostly sensible.';
+    } else {
+      topPSummary.textContent = 'Almost everything is in the running — even "angry" has a shot. Combined with high temperature, this is where outputs get strange.';
+    }
+  }
+  topPSlider.addEventListener('input', renderTopP);
+  renderTopP();
+}
+
+// ============ CODE COPY (if any code blocks are added later) ============
+function copyCode(btn) {
+  const code = btn.closest('.code-wrap').querySelector('code').textContent;
+  navigator.clipboard.writeText(code);
+  const original = btn.textContent;
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => btn.textContent = original, 1500);
+}
+</script>
+</body>
+</html>
