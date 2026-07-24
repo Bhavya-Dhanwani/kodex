@@ -4,6 +4,7 @@ import morgan from "morgan";
 import { ApiError } from "../utils/api-error";
 import { router } from "../routes";
 
+
 export const app = express();
 
 app.use(morgan("dev"));

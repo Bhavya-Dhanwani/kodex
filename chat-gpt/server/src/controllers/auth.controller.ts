@@ -87,6 +87,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 
   res.cookie(env.refreshCookieName, refreshToken, cookieOptions());
+  
   const response: AuthSuccessResponse = {
     message: "Registered successfully",
     accessToken,
