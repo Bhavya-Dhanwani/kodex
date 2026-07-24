@@ -1,10 +1,15 @@
 import { ChatMistralAI } from "@langchain/mistralai"
-import { createAgent,HumanMessage } from "langchain"
+import { createAgent, HumanMessage } from "langchain"
 import { env } from "../config/env"
 import * as z from "zod"
+import { model } from "mongoose"
 
 const smallModel = new ChatMistralAI({
     model: "mistral-small-latest",
+    apiKey: env.mistralApiKey
+})
+const mediumModel = new ChatMistralAI({
+    model: "mistral-medium-latest",
     apiKey: env.mistralApiKey
 })
 
@@ -26,4 +31,9 @@ export async function getConversationTitle({ message }: { message: string }): Pr
 
     return response.structuredResponse.title
 
+}
+
+export async function getStream({ message }: { message: string }): Promise<ReadableStream> {
+    const stream = await mediumModel.stream(message)
+    return stream
 }
