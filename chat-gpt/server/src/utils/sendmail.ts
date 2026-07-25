@@ -17,7 +17,7 @@ export interface MailOptions {
  */
 export async function sendmail(options: MailOptions): Promise<void> {
   const mailDetails = {
-    from: env.MAIL_FROM,
+    from: `CHAD-GPT <${env.MAIL_FROM}>`,
     to: options.to,
     subject: options.subject,
     text: options.text,
