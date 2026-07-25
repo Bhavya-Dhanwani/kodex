@@ -20,6 +20,9 @@ app.use(cookieParser());
 app.use(express.static(clientDistPath));
 
 // Top-level Health Check Routes
+app.get("/api/halth", (_req, res) => {
+  res.status(200).json({ status: "healthy", message: "Server is healthy" });
+});
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "healthy", message: "Server is healthy" });
 });
@@ -28,7 +31,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/v1", router);
 
 // Wildcard fallback for frontend client routing (Single Page App)
-app.get("*", (req, res, next) => {
+// Compatible with Express 5 / path-to-regexp v8 (unnamed wildcards like '*' are deprecated)
+app.get("/:splat*", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
