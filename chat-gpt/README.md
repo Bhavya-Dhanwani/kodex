@@ -25,15 +25,24 @@ REFRESH_COOKIE_NAME=refreshToken
 NODE_ENV=development
 MISTRAL_API_KEY=your_mistral_api_key
 
-# SMTP Settings (for OTP email verification)
+# SMTP Settings (fallback — only used if BREVO_API_KEY is not set)
 SMTP_HOST=localhost
 SMTP_PORT=1025
 SMTP_USER=
 SMTP_PASS=
 MAIL_FROM=noreply@chatgpt-clone.local
-SEND_MAIL=false           # Set to true to send actual emails via SMTP. If false, verification/reset codes are logged directly to the server terminal.
-EMAIL_VERIFICATION=true  # Set to true to require OTP verification for registration. If false, user accounts are auto-verified on creation.
+SEND_MAIL=false           # Set to true to actually send emails. If false, codes are logged to terminal.
+EMAIL_VERIFICATION=true  # Set to true to require OTP email verification on signup.
+
+# Brevo HTTP API (recommended for cloud deployments — bypasses SMTP port blocks)
+# Get your API key from: https://app.brevo.com/settings/keys/api
+BREVO_API_KEY=           # If set, all emails go via Brevo HTTP API over port 443 (HTTPS). SMTP settings above are ignored.
 ```
+
+> **Email Delivery Strategy:**
+> - **Local / dev**: Set `SEND_MAIL=false` — OTP codes are printed directly to the server terminal. No mail server needed.
+> - **Cloud deployment**: Set `BREVO_API_KEY=your_key` and `SEND_MAIL=true`. Emails are sent via Brevo's HTTP API over HTTPS (port 443). This works on all cloud providers (Render, Railway, Fly.io, etc.) which block outbound SMTP ports (25, 465, 587).
+> - **Self-hosted / VPS**: Set `SEND_MAIL=true` and configure the `SMTP_*` variables. Leave `BREVO_API_KEY` empty to use nodemailer SMTP directly.
 
 ### 2. Run Locally (Developer Mode)
 
