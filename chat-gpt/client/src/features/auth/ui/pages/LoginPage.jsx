@@ -42,6 +42,14 @@ export function LoginPage() {
           onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
           required
         />
+        <div className="flex justify-end">
+          <Link
+            className="text-xs font-semibold text-[#A1A1AA] transition-colors hover:text-white hover:underline"
+            to="/forgot-password"
+          >
+            Forgot password?
+          </Link>
+        </div>
         {error && <p className="text-[13px] text-[#EF4444] font-medium">{error}</p>}
         <button
           className="h-11 rounded-lg bg-white text-black font-semibold transition-colors hover:bg-[#E4E4E7] disabled:cursor-not-allowed disabled:opacity-50"
@@ -51,14 +59,6 @@ export function LoginPage() {
           {loading ? 'Signing in...' : 'Login'}
         </button>
       </form>
-      <div className="text-center">
-        <Link
-          className="mt-4 inline-block text-xs font-semibold text-[#A1A1AA] transition-colors hover:text-white hover:underline"
-          to="/forgot-password"
-        >
-          Forgot password?
-        </Link>
-      </div>
     </AuthLayout>
   )
 }
