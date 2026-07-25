@@ -19,7 +19,8 @@ export const chatController = asyncHandler(async (req: Request<{}, {}, RequestMe
     const user = req.user; // Assuming user is attached to the request object after authentication
 
     if (!user) {
-        return res.status(401).json({ error: "Unauthorized" });
+        res.status(401).json({ error: "Unauthorized" });
+        return;
     }
 
     if (!conversationId) {

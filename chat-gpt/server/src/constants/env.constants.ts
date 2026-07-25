@@ -6,6 +6,12 @@ const envConstants = {
     REFRESH_COOKIE_NAME: "refreshToken",
     NODE_ENV: "development",
     LOGGER_LEVEL: "info",
+    SMTP_HOST: "localhost",
+    SMTP_PORT: 1025,
+    SMTP_USER: "",
+    SMTP_PASS: "",
+    MAIL_FROM: "noreply@chatgpt-clone.local",
+    SEND_MAIL: false,
 }
 
 export default envConstants;

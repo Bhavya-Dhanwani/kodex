@@ -86,7 +86,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     ipAddress: req.ip ?? "unknown"
   });
 
-  res.cookie(env.refreshCookieName, refreshToken, cookieOptions());
+  res.cookie(env.REFRESH_COOKIE_NAME, refreshToken, cookieOptions());
   
   const response: AuthSuccessResponse = {
     message: "Registered successfully",
@@ -121,7 +121,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     ipAddress: req.ip ?? "unknown"
   });
 
-  res.cookie(env.refreshCookieName, refreshToken, cookieOptions());
+  res.cookie(env.REFRESH_COOKIE_NAME, refreshToken, cookieOptions());
   const response: AuthSuccessResponse = {
     message: "Logged in successfully",
     accessToken,
@@ -134,7 +134,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const incomingToken =
-    req.cookies[env.refreshCookieName] ??
+    req.cookies[env.REFRESH_COOKIE_NAME] ??
     (req.body.refreshToken ? String(req.body.refreshToken) : "");
 
   if (!incomingToken) {
@@ -182,7 +182,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     ipAddress: req.ip ?? "unknown"
   });
 
-  res.cookie(env.refreshCookieName, nextRefreshToken, cookieOptions());
+  res.cookie(env.REFRESH_COOKIE_NAME, nextRefreshToken, cookieOptions());
   const response: RefreshTokenResponse = {
     message: "Token refreshed",
     accessToken: nextAccessToken,
@@ -199,7 +199,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const incomingToken =
-    req.cookies[env.refreshCookieName] ??
+    req.cookies[env.REFRESH_COOKIE_NAME] ??
     (req.body.refreshToken ? String(req.body.refreshToken) : "");
 
   if (incomingToken) {
@@ -211,7 +211,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  res.clearCookie(env.refreshCookieName, cookieOptions());
+  res.clearCookie(env.REFRESH_COOKIE_NAME, cookieOptions());
   res.status(200).json({ message: "Logged out successfully" });
 });
 

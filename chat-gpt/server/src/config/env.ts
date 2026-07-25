@@ -17,6 +17,12 @@ const envSchema = zod.object({
   REFRESH_TOKEN_TTL: zod.string().default(envConstants.REFRESH_TOKEN_TTL),
   REFRESH_COOKIE_NAME: zod.string().default(envConstants.REFRESH_COOKIE_NAME),
   MISTRAL_API_KEY: zod.string(),
+  SMTP_HOST: zod.string().default(envConstants.SMTP_HOST),
+  SMTP_PORT: zod.coerce.number().default(envConstants.SMTP_PORT),
+  SMTP_USER: zod.string().default(envConstants.SMTP_USER),
+  SMTP_PASS: zod.string().default(envConstants.SMTP_PASS),
+  MAIL_FROM: zod.string().default(envConstants.MAIL_FROM),
+  SEND_MAIL: zod.preprocess((val) => val === 'true' || val === '1' || val === true, zod.boolean()).default(envConstants.SEND_MAIL),
   LOGGER_LEVEL: zod.string().default(envConstants.LOGGER_LEVEL),
 });
 
@@ -30,7 +36,8 @@ if (!envParsed.success) {
 }
 
 // Export the validated environment variables as a typed object
-const env = envParsed.data;
+export const env: AppEnv = envParsed.data;
 
-// Export the validated environment variables as a typed object
+export const isProduction = env.NODE_ENV === "production";
+
 export default env;
