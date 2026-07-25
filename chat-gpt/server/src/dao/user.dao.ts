@@ -21,7 +21,7 @@ class UserDao {
         resetPasswordTokenHash: tokenHash,
         resetPasswordExpiresAt: expiresAt
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -40,7 +40,7 @@ class UserDao {
         resetPasswordTokenHash: null,
         resetPasswordExpiresAt: null
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -51,7 +51,7 @@ class UserDao {
         verificationOtpHash: otpHash,
         verificationOtpExpiresAt: expiresAt
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -63,7 +63,7 @@ class UserDao {
         verificationOtpHash: null,
         verificationOtpExpiresAt: null
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 }

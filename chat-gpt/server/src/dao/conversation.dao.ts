@@ -9,6 +9,10 @@ class ConversationDao {
         return conversation;
         
     }
+
+    async findConversationsByUser(userId: string): Promise<ConversationDocument[]> {
+        return ConversationModel.find({ user: userId }).sort({ createdAt: -1 });
+    }
     
 }
 

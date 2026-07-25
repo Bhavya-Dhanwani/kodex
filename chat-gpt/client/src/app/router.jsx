@@ -34,7 +34,7 @@ export const router = createBrowserRouter([
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },
       {
-        path: 'chat',
+        path: 'chat/:id?',
         element: (
           <ProtectedRoute>
             <ChatPage />

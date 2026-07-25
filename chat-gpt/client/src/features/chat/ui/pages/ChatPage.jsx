@@ -1,32 +1,400 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../auth/hooks/useAuth'
+import { useSession } from '../../hooks/useSession'
+import { chatService } from '../../service/chatService'
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function highlightHTML(code) {
+  const escaped = escapeHtml(code)
+  const tagRegex = /(&lt;!--[\s\S]*?--&gt;)|(&lt;!DOCTYPE[\s\S]*?&gt;)|(&lt;\/?[a-zA-Z0-9:-]+(\s[\s\S]*?)?\/?&gt;)/gi
+  
+  let lastIndex = 0
+  let html = ''
+  let match
+
+  while ((match = tagRegex.exec(escaped)) !== null) {
+    html += escaped.substring(lastIndex, match.index)
+    const [full, comment, doctype, tag] = match
+
+    if (comment) {
+      html += `<span class="text-[#71717A]">${comment}</span>`
+    } else if (doctype) {
+      html += `<span class="text-[#60A5FA]">${doctype}</span>`
+    } else if (tag) {
+      const highlightedTag = tag
+        .replace(/^(&lt;\/?[a-zA-Z0-9:-]+)/, '<span class="text-[#60A5FA]">$1</span>')
+        .replace(/(\s+)([a-zA-Z0-9_-]+)(=")([^"]*)(")/g, '$1<span class="text-[#FCD34D]">$2</span>$3<span class="text-[#34D399]">$4</span>$5')
+        .replace(/(\s+)([a-zA-Z0-9_-]+)(=')([^']*)(')/g, '$1<span class="text-[#FCD34D]">$2</span>$3<span class="text-[#34D399]">$4</span>$5')
+        .replace(/(\/?&gt;)$/, '<span class="text-[#60A5FA]">$1</span>')
+      html += highlightedTag
+    }
+    lastIndex = tagRegex.lastIndex
+  }
+  html += escaped.substring(lastIndex)
+  return html
+}
+
+function highlightCSS(code) {
+  const regex = /(\/\*[\s\S]*?\*\/)|([a-zA-Z0-9_.-]+)(?=\s*\{)|([a-zA-Z0-9_-]+)(?=\s*:)|(:\s*)([^;}]+)/g
+  let lastIndex = 0
+  let html = ''
+  let match
+
+  while ((match = regex.exec(code)) !== null) {
+    html += escapeHtml(code.substring(lastIndex, match.index))
+    const [full, comment, selector, property, colon, val] = match
+
+    if (comment) {
+      html += `<span class="text-[#71717A]">${escapeHtml(comment)}</span>`
+    } else if (selector) {
+      html += `<span class="text-[#60A5FA]">${escapeHtml(selector)}</span>`
+    } else if (property) {
+      html += `<span class="text-[#FCD34D]">${escapeHtml(property)}</span>`
+    } else if (val) {
+      html += `${escapeHtml(colon)}<span class="text-[#34D399]">${escapeHtml(val)}</span>`
+    }
+    lastIndex = regex.lastIndex
+  }
+  html += escapeHtml(code.substring(lastIndex))
+  return html
+}
+
+function highlightSQL(code) {
+  const regex = /(\-\-.*)|((["'])([\s\S]*?)\3)|(\b(?:SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|JOIN|LEFT|RIGHT|INNER|ON|GROUP|BY|ORDER|HAVING|LIMIT|CREATE|TABLE|DROP|ALTER|INDEX|INTO|VALUES|SET|AND|OR|NOT|IN|LIKE|IS|NULL|AS|UNION|ALL|CASE|WHEN|THEN|ELSE|END)\b)|(\b\d+\b)/gi
+  let lastIndex = 0
+  let html = ''
+  let match
+
+  while ((match = regex.exec(code)) !== null) {
+    html += escapeHtml(code.substring(lastIndex, match.index))
+    const [full, comment, string, , keyword, number] = match
+
+    if (comment) {
+      html += `<span class="text-[#71717A]">${escapeHtml(comment)}</span>`
+    } else if (string) {
+      html += `<span class="text-[#34D399]">${escapeHtml(string)}</span>`
+    } else if (keyword) {
+      html += `<span class="text-[#60A5FA]">${escapeHtml(keyword)}</span>`
+    } else if (number) {
+      html += `<span class="text-[#FCD34D]">${escapeHtml(number)}</span>`
+    }
+    lastIndex = regex.lastIndex
+  }
+  html += escapeHtml(code.substring(lastIndex))
+  return html
+}
+
+function highlightGeneral(code) {
+  const regex = /(\/\/.*|#.*|\/\*[\s\S]*?\*\/)|((["'`])[\s\S]*?\3)|(\b(?:class|public|private|protected|static|final|void|int|double|float|boolean|char|long|short|byte|if|else|for|while|do|return|import|package|new|def|as|from|try|except|fn|let|mut|struct|impl|use|namespace|using|virtual|override|interface|enum|switch|case|break|continue|nil|null|true|false|self|this|elif|pass|lambda|with|assert|yield|async|await|const|var|function|export)\b)|(\b\d+\b)|(\b[a-zA-Z0-9_]+)(?=\()/g
+  let lastIndex = 0
+  let html = ''
+  let match
+
+  while ((match = regex.exec(code)) !== null) {
+    html += escapeHtml(code.substring(lastIndex, match.index))
+    const [full, comment, string, , keyword, number, func] = match
+
+    if (comment) {
+      html += `<span class="text-[#71717A]">${escapeHtml(comment)}</span>`
+    } else if (string) {
+      html += `<span class="text-[#34D399]">${escapeHtml(string)}</span>`
+    } else if (keyword) {
+      html += `<span class="text-[#60A5FA]">${escapeHtml(keyword)}</span>`
+    } else if (number) {
+      html += `<span class="text-[#FCD34D]">${escapeHtml(number)}</span>`
+    } else if (func) {
+      html += `<span class="text-[#FBBF24]">${escapeHtml(func)}</span>`
+    }
+    lastIndex = regex.lastIndex
+  }
+  html += escapeHtml(code.substring(lastIndex))
+  return html
+}
+
+function highlightCode(code, language) {
+  const lang = language.toLowerCase()
+
+  if (lang === 'html' || lang === 'xml' || lang === 'xhtml') {
+    return highlightHTML(code)
+  }
+  if (lang === 'css') {
+    return highlightCSS(code)
+  }
+  if (lang === 'sql') {
+    return highlightSQL(code)
+  }
+
+  return highlightGeneral(code)
+}
+
+function formatMarkdownText(text) {
+  let escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const lines = escaped.split('\n')
+  const formattedLines = lines.map((line) => {
+    let trimmed = line.trim()
+    let isBlock = false
+    let result = line
+
+    // 1. Headers
+    if (trimmed.startsWith('### ')) {
+      isBlock = true
+      result = `<h3 class="text-base font-bold mt-4 mb-1.5 text-white">${trimmed.slice(4)}</h3>`
+    } else if (trimmed.startsWith('## ')) {
+      isBlock = true
+      result = `<h2 class="text-lg font-bold mt-5 mb-2 text-white">${trimmed.slice(3)}</h2>`
+    } else if (trimmed.startsWith('# ')) {
+      isBlock = true
+      result = `<h1 class="text-xl font-bold mt-6 mb-2.5 text-white">${trimmed.slice(2)}</h1>`
+    } 
+    // 2. Unordered lists
+    else if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+      isBlock = true
+      result = `<li class="list-disc ml-5 my-1 text-zinc-300 leading-relaxed">${trimmed.slice(2)}</li>`
+    }
+    // 3. Ordered lists
+    else if (/^\d+\.\s/.test(trimmed)) {
+      isBlock = true
+      const match = trimmed.match(/^(\d+\.\s)(.*)/)
+      result = `<li class="list-decimal ml-5 my-1 text-zinc-300 leading-relaxed">${match[2]}</li>`
+    }
+
+    // Apply inline styling (bold, inline code)
+    result = result.replace(/`([^`]+)`/g, '<code class="bg-[#18181B] border border-[#27272A] px-1.5 py-0.5 rounded text-[#FCD34D] font-mono text-[12.5px]">$1</code>')
+    result = result.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
+
+    if (!isBlock) {
+      return trimmed === '' ? '<div class="h-2"></div>' : `<p class="my-1 text-zinc-300 leading-relaxed">${result}</p>`
+    }
+
+    return result
+  })
+
+  return formattedLines.join('')
+}
+
+function CodeBlock({ language, code }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="my-4 overflow-hidden rounded-xl border border-[#27272A] bg-[#18181B] text-left select-text">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#0F0F11] border-b border-[#27272A] text-xs font-semibold text-[#A1A1AA] select-none">
+        <div className="flex items-center gap-2">
+          {/* File Tag Icon */}
+          <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5 text-[#A1A1AA]">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span className="uppercase tracking-wider">{language}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* View code button */}
+          <button className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer" title="View Code">
+            <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </button>
+          {/* Copy button */}
+          <button 
+            onClick={handleCopy}
+            className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+            title="Copy Code"
+          >
+            {copied ? (
+              <span className="text-[10px] text-zinc-400 font-sans">Copied!</span>
+            ) : (
+              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+      {/* Code Area */}
+      <div className="p-4 overflow-x-auto bg-[#09090B] font-mono text-[13px] leading-relaxed text-[#ECECEC] whitespace-pre">
+        <code dangerouslySetInnerHTML={{ __html: highlightCode(code, language) }} />
+      </div>
+    </div>
+  )
+}
+
+function parseMessageContent(content) {
+  const parts = []
+  let currentIndex = 0
+
+  while (currentIndex < content.length) {
+    const openIndex = content.indexOf('```', currentIndex)
+
+    if (openIndex === -1) {
+      parts.push({
+        type: 'text',
+        content: content.substring(currentIndex)
+      })
+      break
+    }
+
+    if (openIndex > currentIndex) {
+      parts.push({
+        type: 'text',
+        content: content.substring(currentIndex, openIndex)
+      })
+    }
+
+    const codeStartIndex = openIndex + 3
+    let newlineIndex = content.indexOf('\n', codeStartIndex)
+    let closeIndex = -1
+
+    if (newlineIndex !== -1) {
+      closeIndex = content.indexOf('```', newlineIndex + 1)
+    }
+
+    if (closeIndex === -1) {
+      // Unclosed code block (still streaming)
+      let language = 'plaintext'
+      let code = ''
+
+      if (newlineIndex === -1) {
+        language = content.substring(codeStartIndex).trim() || 'plaintext'
+        code = ''
+      } else {
+        language = content.substring(codeStartIndex, newlineIndex).trim() || 'plaintext'
+        code = content.substring(newlineIndex + 1)
+      }
+
+      parts.push({
+        type: 'code',
+        language: language,
+        code: code
+      })
+      break
+    } else {
+      // Closed code block
+      const language = content.substring(codeStartIndex, newlineIndex).trim() || 'plaintext'
+      const code = content.substring(newlineIndex + 1, closeIndex)
+
+      parts.push({
+        type: 'code',
+        language: language,
+        code: code
+      })
+      currentIndex = closeIndex + 3
+    }
+  }
+
+  return parts
+}
 
 export function ChatPage() {
-  const { user, logout } = useAuth()
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  
+  const { user, logout, accessToken } = useAuth()
+  const { sessions, activeSessionId, setActive, hydrateSessions } = useSession()
+
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState([])
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [loadingMessages, setLoadingMessages] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  
   const messagesEndRef = useRef(null)
+  const ignoreNextHistoryFetchRef = useRef(null)
 
-  // Prepopulate sidebar items matching the screenshot
-  const [sidebarChats, setSidebarChats] = useState([
-    { id: '1', title: 'sdkjfhsjkf' },
-    { id: '2', title: 'Email to Contact SIH Winner' },
-    { id: '3', title: 'Express Server Prank Code' },
-    { id: '4', title: 'LocalStorage Security Risks' },
-    { id: '5', title: 'TypeScript Type Assertion' },
-    { id: '6', title: 'Amazon delivery issue' },
-    { id: '7', title: 'Dockerfile Multi-Stage Explanati...' },
-    { id: '8', title: 'Download folder as ZIP' },
-    { id: '9', title: 'Taare song inquiry' },
-    { id: '10', title: 'v0 vs Lovable' },
-    { id: '11', title: 'AI Shorts Generator JS' },
-    { id: '12', title: 'Identifying 32-bit Integer' },
-    { id: '13', title: 'Time Calculation for Events' },
-    { id: '14', title: 'AI Video Editor Names' },
-    { id: '15', title: 'React Build in Node' },
-    { id: '16', title: 'var vs let output' }
-  ])
+  // Sync activeSessionId with URL param "id"
+  useEffect(() => {
+    setActive(id || null)
+  }, [id])
+
+  // Fetch all sessions on mount
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const { data } = await chatService.listSessions()
+        hydrateSessions(data.data.sessions || [])
+      } catch (err) {
+        console.error('Failed to fetch sessions:', err)
+      }
+    }
+    fetchSessions()
+  }, [])
+
+  // Fetch messages when active session changes
+  useEffect(() => {
+    let isCurrent = true
+
+    if (activeSessionId) {
+      // Skip message fetch if we are currently streaming or about to stream on mount
+      if (isStreaming || location.state?.streamOnMount) {
+        setLoadingMessages(false)
+        return
+      }
+      if (ignoreNextHistoryFetchRef.current === activeSessionId) {
+        // Skip message fetch because we are actively streaming this new session
+        ignoreNextHistoryFetchRef.current = null
+        setLoadingMessages(false)
+        return
+      }
+
+      const fetchMessages = async () => {
+        setLoadingMessages(true)
+        try {
+          const { data } = await chatService.getMessages(activeSessionId)
+          if (isCurrent) {
+            setMessages(data.data.messages || [])
+          }
+        } catch (err) {
+          console.error('Failed to fetch messages:', err)
+        } finally {
+          if (isCurrent) {
+            setLoadingMessages(false)
+          }
+        }
+      }
+      fetchMessages()
+    } else {
+      if (!isStreaming) {
+        setMessages([])
+      }
+      setLoadingMessages(false)
+    }
+
+    return () => {
+      isCurrent = false
+    }
+  }, [activeSessionId, isStreaming, location.state])
+
+  // Handle streaming on mount if navigated from a new chat creation
+  useEffect(() => {
+    if (activeSessionId && id === activeSessionId && location.state?.streamOnMount) {
+      const messageToStream = location.state.streamOnMount
+      
+      // Clear navigation state immediately so reloads don't trigger it again
+      navigate(location.pathname, { replace: true, state: {} })
+
+      // Trigger the stream
+      triggerStream(messageToStream, activeSessionId)
+    }
+  }, [activeSessionId, id, location.state])
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -34,51 +402,140 @@ export function ChatPage() {
   }, [messages])
 
   // Get user name display
-  const displayName = useMemo(() => {
-    if (user?.name) return user.name
-    if (user?.email) return user.email.split('@')[0]
-    return 'Bhavya'
-  }, [user])
+  const displayName = user?.name || user?.email?.split('@')[0] || 'Bhavya'
 
-  function handleSend(e) {
-    if (e) e.preventDefault()
-    if (!input.trim()) return
+  async function triggerStream(messageContent, sessionId) {
+    if (isStreaming) return
+    setIsStreaming(true)
 
-    const userMessageContent = input.trim()
-    const newMsg = {
+    // Append user message immediately
+    const userMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: userMessageContent
+      content: messageContent
     }
+    setMessages((prev) => [...prev, userMessage])
 
-    setMessages((prev) => [...prev, newMsg])
+    // Append a placeholder assistant message for streaming
+    const assistantMessageId = (Date.now() + 1).toString()
+    const assistantMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: ''
+    }
+    setMessages((prev) => [...prev, assistantMessage])
+
+    try {
+      const response = await fetch('/api/v1/chat/conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          message: messageContent,
+          conversationId: sessionId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to stream AI response')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() || ''
+
+        for (const part of parts) {
+          let cleanPart = part
+          // Strip any leading newlines left over from buffer split
+          while (cleanPart.startsWith('\n') || cleanPart.startsWith('\r')) {
+            cleanPart = cleanPart.slice(1)
+          }
+
+          if (cleanPart.startsWith('data: ')) {
+            const dataStr = cleanPart.slice(6)
+            
+            try {
+              const packet = JSON.parse(dataStr)
+              if (packet && packet.text !== undefined) {
+                const text = packet.text
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: msg.content + text }
+                      : msg
+                  )
+                )
+              }
+            } catch (err) {
+              console.error('Error parsing SSE packet:', err)
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Streaming error:', err)
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: 'Error streaming response. Please try again.' }
+            : msg
+        )
+      )
+    } finally {
+      setIsStreaming(false)
+    }
+  }
+
+  async function handleSend(e) {
+    if (e) e.preventDefault()
+    if (!input.trim() || isStreaming) return
+
+    const userMessageContent = input.trim()
     setInput('')
 
-    // Add user message to top of recents
-    const chatTitle = userMessageContent.length > 28 
-      ? userMessageContent.substring(0, 25) + '...' 
-      : userMessageContent;
-    setSidebarChats((prev) => [
-      { id: Date.now().toString(), title: chatTitle },
-      ...prev
-    ])
-
-    // Simulate mock assistant response after a short delay
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `It looks like you typed "${userMessageContent}", which doesn't form a recognizable word or question. Could you resend what you meant? I'm here to help.`
+    if (!activeSessionId) {
+      // 1. First message of a new chat session!
+      setIsStreaming(true)
+      try {
+        const { data } = await chatService.createSession(userMessageContent)
+        const { conversationId, title } = data.data
+        
+        const newSession = {
+          id: conversationId,
+          title,
+          createdAt: new Date().toISOString()
         }
-      ])
-    }, 800)
+        
+        // Skip database history reload since we already have the fully streamed content in local state
+        ignoreNextHistoryFetchRef.current = conversationId
+        
+        hydrateSessions([newSession, ...sessions])
+        
+        // Transition route immediately, passing the message to trigger the stream on mount
+        navigate(`/chat/${conversationId}`, { replace: true, state: { streamOnMount: userMessageContent } })
+      } catch (err) {
+        console.error('Failed to create session:', err)
+      } finally {
+        setIsStreaming(false)
+      }
+    } else {
+      // 2. Existing chat session, trigger stream immediately
+      triggerStream(userMessageContent, activeSessionId)
+    }
   }
 
   function handleNewChat() {
-    setMessages([])
-    setInput('')
+    navigate('/chat')
   }
 
   return (
@@ -123,88 +580,28 @@ export function ChatPage() {
               <span>New chat</span>
             </div>
           </button>
-          
-          <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-            <div className="flex items-center gap-2.5">
-              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-              </svg>
-              <span>Library</span>
-            </div>
-          </button>
-
-          {messages.length > 0 && (
-            <>
-              <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-                <div className="flex items-center gap-2.5">
-                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                  <span>Projects</span>
-                </div>
-              </button>
-              <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-                <div className="flex items-center gap-2.5">
-                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  <span>Scheduled</span>
-                </div>
-              </button>
-            </>
-          )}
-
-          {!messages.length && (
-            <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-              <div className="flex items-center gap-2.5">
-                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span>Scheduled</span>
-              </div>
-            </button>
-          )}
-
-          <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-            <div className="flex items-center gap-2.5">
-              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                <path d="M18 12V4H6v8"></path>
-                <path d="M12 12v6"></path>
-                <path d="M15 15H9"></path>
-                <path d="M10 22h4"></path>
-              </svg>
-              <span>Plugins</span>
-            </div>
-          </button>
-
-          <button className="flex items-center w-full px-3 py-2 rounded-lg text-sm text-[#A1A1AA] hover:text-white hover:bg-[#1C1C1E] transition-colors mt-0.5">
-            <div className="flex items-center gap-2.5">
-              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="19" cy="12" r="1"></circle>
-                <circle cx="5" cy="12" r="1"></circle>
-              </svg>
-              <span>More</span>
-            </div>
-          </button>
         </div>
 
         {/* Recents Section */}
         <div className="flex-1 overflow-y-auto px-3 mt-4 scrollbar-thin">
           <div className="px-3 text-xs font-semibold text-[#71717A] mb-1.5">Recents</div>
           <div className="grid gap-0.5">
-            {sidebarChats.map((chat) => (
+            {sessions.map((chat) => (
               <button
                 key={chat.id}
-                className="w-full text-left px-3 py-2 text-sm rounded-lg text-[#E4E4E7] hover:bg-[#1C1C1E] hover:text-white truncate transition-colors"
+                onClick={() => navigate(`/chat/${chat.id}`)}
+                className={`w-full text-left px-3 py-2 text-sm rounded-lg truncate transition-colors ${
+                  chat.id === activeSessionId
+                    ? 'bg-[#1C1C1E] text-white font-medium'
+                    : 'text-[#E4E4E7] hover:bg-[#1C1C1E] hover:text-white'
+                }`}
               >
                 {chat.title}
               </button>
             ))}
+            {sessions.length === 0 && (
+              <div className="px-3 text-xs text-[#71717A] italic py-2">No chats yet</div>
+            )}
           </div>
         </div>
 
@@ -221,7 +618,6 @@ export function ChatPage() {
               </div>
               <div className="grid leading-tight">
                 <span className="text-xs font-semibold text-white truncate max-w-[140px]">{displayName}</span>
-                <span className="text-[10px] text-[#A1A1AA]">Go</span>
               </div>
             </div>
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4 w-4 text-[#A1A1AA]">
@@ -292,7 +688,11 @@ export function ChatPage() {
 
         {/* Message stream / Greeting Container */}
         <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-none flex flex-col">
-          {messages.length === 0 ? (
+          {loadingMessages ? (
+            <div className="flex-1 flex items-center justify-center text-sm text-[#A1A1AA]">
+              Loading messages...
+            </div>
+          ) : messages.length === 0 ? (
             /* Screen 1: Empty state / Greeting in center */
             <div className="flex-1 flex flex-col items-center justify-center pb-24">
               <h2 className="text-xl md:text-2xl font-semibold text-white tracking-tight text-center">
@@ -300,24 +700,18 @@ export function ChatPage() {
               </h2>
               {/* Centered Composer */}
               <div className="w-full max-w-[720px] mt-6">
-                <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2.5 focus-within:border-zinc-500 transition-colors">
-                  <button type="button" className="p-2 text-[#A1A1AA] hover:text-white transition-colors">
-                    <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </button>
+                <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2 focus-within:border-zinc-500 transition-colors">
                   <input
                     type="text"
                     placeholder="Ask anything"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-2 py-1"
+                    className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1"
                   />
                   <button 
                     type="submit" 
-                    disabled={!input.trim()}
-                    className="p-2 rounded-full bg-zinc-800 text-white disabled:text-zinc-600 disabled:bg-zinc-900 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    disabled={!input.trim() || isStreaming}
+                    className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed"
                   >
                     <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4 w-4">
                       <line x1="12" y1="19" x2="12" y2="5"></line>
@@ -341,9 +735,19 @@ export function ChatPage() {
                       {msg.content}
                     </div>
                   ) : (
-                    /* Assistant Message plain text */
+                    /* Assistant Message styled segments */
                     <div className="text-[15px] text-white leading-relaxed break-words w-full pr-10">
-                      {msg.content}
+                      {parseMessageContent(msg.content).map((part, idx) => {
+                        if (part.type === 'code') {
+                          return <CodeBlock key={idx} language={part.language} code={part.code} />
+                        }
+                        return (
+                          <div 
+                            key={idx} 
+                            dangerouslySetInnerHTML={{ __html: formatMarkdownText(part.content) }} 
+                          />
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -357,41 +761,24 @@ export function ChatPage() {
         {messages.length > 0 && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black to-transparent pt-10 pb-6 px-4">
             <div className="w-full max-w-[720px] mx-auto">
-              <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2.5 focus-within:border-zinc-500 transition-colors">
-                {/* Plus trigger button */}
-                <button type="button" className="p-2 text-[#A1A1AA] hover:text-white transition-colors">
-                  <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
+              <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2 focus-within:border-zinc-500 transition-colors">
                 <input
                   type="text"
                   placeholder="Ask anything"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-2 py-1"
+                  className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1"
                 />
-                
-                {/* Voice & Stop indicators */}
-                <div className="flex items-center gap-2">
-                  <button type="button" className="p-2 text-[#A1A1AA] hover:text-white transition-colors">
-                    <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                      <line x1="12" y1="19" x2="12" y2="23"></line>
-                      <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </svg>
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={!input.trim()}
-                    className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer"
-                  >
-                    {/* Stop icon (square) when typing, or arrow. Let's make it match the screenshot */}
-                    <div className="h-3 w-3 bg-current rounded-sm"></div>
-                  </button>
-                </div>
+                <button 
+                  type="submit" 
+                  disabled={!input.trim() || isStreaming}
+                  className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4.5 w-4.5">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+                </button>
               </form>
               <div className="text-[11px] text-center text-[#71717A] mt-2.5 select-none">
                 chadgpt can make mistakes. Check important info.
