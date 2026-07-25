@@ -8,6 +8,7 @@ export type AppEnv = {
   REFRESH_TOKEN_TTL: string;
   REFRESH_COOKIE_NAME: string;
   MISTRAL_API_KEY: string;
+  BREVO_API_KEY: string;
   SMTP_HOST: string;
   SMTP_PORT: number;
   SMTP_USER: string;

@@ -17,6 +17,7 @@ const envSchema = zod.object({
   REFRESH_TOKEN_TTL: zod.string().default(envConstants.REFRESH_TOKEN_TTL),
   REFRESH_COOKIE_NAME: zod.string().default(envConstants.REFRESH_COOKIE_NAME),
   MISTRAL_API_KEY: zod.string(),
+  BREVO_API_KEY: zod.string().default(""),
   SMTP_HOST: zod.string().default(envConstants.SMTP_HOST),
   SMTP_PORT: zod.coerce.number().default(envConstants.SMTP_PORT),
   SMTP_USER: zod.string().default(envConstants.SMTP_USER),

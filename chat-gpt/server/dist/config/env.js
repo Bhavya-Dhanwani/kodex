@@ -53,6 +53,7 @@ const envSchema = zod.object({
     REFRESH_TOKEN_TTL: zod.string().default(env_constants_1.default.REFRESH_TOKEN_TTL),
     REFRESH_COOKIE_NAME: zod.string().default(env_constants_1.default.REFRESH_COOKIE_NAME),
     MISTRAL_API_KEY: zod.string(),
+    BREVO_API_KEY: zod.string().default(""),
     SMTP_HOST: zod.string().default(env_constants_1.default.SMTP_HOST),
     SMTP_PORT: zod.coerce.number().default(env_constants_1.default.SMTP_PORT),
     SMTP_USER: zod.string().default(env_constants_1.default.SMTP_USER),
