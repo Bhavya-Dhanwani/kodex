@@ -31,8 +31,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/v1", router);
 
 // Wildcard fallback for frontend client routing (Single Page App)
-// Compatible with Express 5 / path-to-regexp v8 (unnamed wildcards like '*' are deprecated)
-app.get("/:splat*", (req, res, next) => {
+// Compatible with Express 5 / path-to-regexp v8 (wildcards are defined as `/{*name}`)
+app.get("/{*splat}", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
