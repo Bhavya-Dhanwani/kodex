@@ -13,6 +13,10 @@ class ConversationDao {
     async findConversationsByUser(userId: string): Promise<ConversationDocument[]> {
         return ConversationModel.find({ user: userId }).sort({ createdAt: -1 });
     }
+
+    async deleteConversation(conversationId: string): Promise<void> {
+        await ConversationModel.deleteOne({ _id: conversationId });
+    }
     
 }
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { conversation, getSessions, getMessages, createSession } from "../controllers/chat.controller";
+import { conversation, getSessions, getMessages, createSession, deleteConversation } from "../controllers/chat.controller";
 import { authUserMiddleware } from "../middlewares/auth-user.middleware";
 import { sendMessageValidation } from "../validations/chat.validation";
 import { validateRequest } from "../validations/validate-request";
@@ -18,5 +18,6 @@ chatRouter.post("/session/create", createSession);
 
 chatRouter.get("/sessions", getSessions);
 chatRouter.get("/conversation/:id/messages", getMessages);
+chatRouter.delete("/conversation/:id", deleteConversation);
 
 export { chatRouter };

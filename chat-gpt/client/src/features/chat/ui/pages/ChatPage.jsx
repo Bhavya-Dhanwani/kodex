@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../auth/hooks/useAuth'
 import { useSession } from '../../hooks/useSession'
 import { chatService } from '../../service/chatService'
+import logoImg from '../../../../assets/logo.png'
 
 function escapeHtml(text) {
   return text
@@ -316,9 +317,13 @@ export function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [openMenuSessionId, setOpenMenuSessionId] = useState(null)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' })
   
   const messagesEndRef = useRef(null)
   const ignoreNextHistoryFetchRef = useRef(null)
+  const inputRef = useRef(null)
 
   // Sync activeSessionId with URL param "id"
   useEffect(() => {
@@ -401,8 +406,71 @@ export function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Global click listener to close session 3-dots menu
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setOpenMenuSessionId(null)
+    }
+    window.addEventListener('click', handleOutsideClick)
+    return () => window.removeEventListener('click', handleOutsideClick)
+  }, [])
+
+  // Keyboard Shortcuts: '/' focuses input, 'Ctrl+Shift+O' opens New Chat
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Shortcut 1: Ctrl + Shift + O -> New Chat
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'o') {
+        e.preventDefault()
+        handleNewChat()
+        return
+      }
+
+      // Shortcut 2: / -> Focus text box (only if not already focusing an input/textarea)
+      if (e.key === '/') {
+        const activeEl = document.activeElement
+        if (
+          activeEl &&
+          (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)
+        ) {
+          return
+        }
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   // Get user name display
   const displayName = user?.name || user?.email?.split('@')[0] || 'Bhavya'
+
+  const showAlert = (title, message) => {
+    setCustomAlert({ show: true, title, message })
+  }
+
+  async function handleDeleteSession(sessionId) {
+    try {
+      await chatService.deleteSession(sessionId)
+      
+      // Update session list in local state
+      const updatedSessions = sessions.filter((s) => s.id !== sessionId)
+      hydrateSessions(updatedSessions)
+      
+      // If deleted session was active, navigate to /chat
+      if (sessionId === activeSessionId) {
+        navigate('/chat')
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err)
+      showAlert('Delete Failed', err.response?.data?.message || err.message || JSON.stringify(err))
+    } finally {
+      setOpenMenuSessionId(null)
+    }
+  }
 
   async function triggerStream(messageContent, sessionId) {
     if (isStreaming) return
@@ -502,6 +570,9 @@ export function ChatPage() {
 
     const userMessageContent = input.trim()
     setInput('')
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+    }
 
     if (!activeSessionId) {
       // 1. First message of a new chat session!
@@ -534,33 +605,90 @@ export function ChatPage() {
     }
   }
 
+  const handleInputChange = (e) => {
+    setInput(e.target.value)
+    
+    // Auto-grow height calculation
+    const element = e.target
+    element.style.height = 'auto'
+    const newHeight = Math.min(element.scrollHeight, 200)
+    element.style.height = `${newHeight}px`
+  }
+
+  const handleInputKeyDown = (e) => {
+    // If Enter is pressed without Shift, submit!
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (input.trim() && !isStreaming) {
+        handleSend(e)
+      }
+    }
+  }
+
   function handleNewChat() {
     navigate('/chat')
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-black text-[#FAFAFA] font-sans antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-black text-[#FAFAFA] font-sans antialiased relative">
+      {/* Custom Alert Modal */}
+      {customAlert.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div className="w-full max-w-[400px] bg-[#18181B] border border-[#27272A] rounded-2xl p-6 shadow-2xl mx-4 transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-[#EF4444] mb-3">
+              <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-6 w-6">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <h3 className="text-lg font-bold text-white">{customAlert.title}</h3>
+            </div>
+            <p className="text-sm text-zinc-300 mb-6 leading-relaxed">
+              {customAlert.message}
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setCustomAlert({ show: false, title: '', message: '' })}
+                className="px-5 py-2 text-xs font-semibold bg-white text-black rounded-full hover:bg-neutral-200 transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Sidebar Backdrop overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 z-30 md:hidden transition-opacity duration-300"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-[260px] h-full bg-[#000000] border-r border-[#1C1C1E] select-none">
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-40
+        flex flex-col w-[260px] h-full bg-[#000000] border-r border-[#1C1C1E] select-none
+        transition-transform duration-300 ease-in-out
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         {/* Top Header */}
         <div className="flex items-center justify-between px-3.5 py-4 text-[#FAFAFA]">
           {/* Logo & Sidebar toggle */}
-          <div className="flex items-center gap-2 select-none">
+          <div className="flex items-center gap-2.5 select-none">
+            <img src={logoImg} alt="CHAD GPT Logo" className="h-10 w-10 object-contain rounded-md" />
             <span className="text-sm font-black tracking-widest text-white">CHAD GPT</span>
           </div>
           <div className="flex items-center gap-2.5">
-            {/* Search Icon */}
-            <button className="p-1 hover:bg-[#1C1C1E] rounded-md transition-colors text-[#A1A1AA] hover:text-white">
-              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-            {/* Toggle Sidebar Icon */}
-            <button className="p-1 hover:bg-[#1C1C1E] rounded-md transition-colors text-[#A1A1AA] hover:text-white">
-              <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4.5 w-4.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="9" y1="3" x2="9" y2="21"></line>
+            {/* Close button for mobile sidebar */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="md:hidden p-1 hover:bg-[#1C1C1E] rounded-md transition-colors text-[#A1A1AA] hover:text-white cursor-pointer"
+            >
+              <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4.5 w-4.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           </div>
@@ -569,7 +697,10 @@ export function ChatPage() {
         {/* Menu Options */}
         <div className="px-3 py-1">
           <button 
-            onClick={handleNewChat}
+            onClick={() => {
+              handleNewChat()
+              setIsMobileSidebarOpen(false)
+            }}
             className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-white font-medium hover:bg-[#1C1C1E] transition-colors"
           >
             <div className="flex items-center gap-2.5">
@@ -587,17 +718,63 @@ export function ChatPage() {
           <div className="px-3 text-xs font-semibold text-[#71717A] mb-1.5">Recents</div>
           <div className="grid gap-0.5">
             {sessions.map((chat) => (
-              <button
+              <div
                 key={chat.id}
-                onClick={() => navigate(`/chat/${chat.id}`)}
-                className={`w-full text-left px-3 py-2 text-sm rounded-lg truncate transition-colors ${
-                  chat.id === activeSessionId
-                    ? 'bg-[#1C1C1E] text-white font-medium'
-                    : 'text-[#E4E4E7] hover:bg-[#1C1C1E] hover:text-white'
-                }`}
+                className="group relative flex items-center justify-between rounded-lg hover:bg-[#1C1C1E] transition-colors"
               >
-                {chat.title}
-              </button>
+                <button
+                  onClick={() => {
+                    navigate(`/chat/${chat.id}`)
+                    setIsMobileSidebarOpen(false)
+                  }}
+                  className={`flex-1 text-left pl-3 pr-8 py-2 text-sm truncate transition-colors ${
+                    chat.id === activeSessionId
+                      ? 'text-white font-medium bg-[#1C1C1E] rounded-lg'
+                      : 'text-[#E4E4E7] group-hover:text-white'
+                  }`}
+                >
+                  {chat.title}
+                </button>
+
+                {/* 3 dots vertical button (visible on hover) */}
+                <div className="absolute right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setOpenMenuSessionId(openMenuSessionId === chat.id ? null : chat.id)
+                    }}
+                    className="p-1 hover:bg-[#27272A] rounded text-[#A1A1AA] hover:text-white transition-colors cursor-pointer"
+                  >
+                    <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4 w-4">
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="12" cy="5" r="1"></circle>
+                      <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
+                  </button>
+
+                  {/* Context Menu Dropdown */}
+                  {openMenuSessionId === chat.id && (
+                    <div className="absolute right-0 top-7 w-28 bg-[#18181B] border border-[#27272A] rounded-lg shadow-xl py-1 z-50 text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteSession(chat.id)
+                          setIsMobileSidebarOpen(false)
+                        }}
+                        className="w-full px-3 py-1.5 text-xs text-[#EF4444] font-semibold hover:bg-neutral-800 transition-colors text-left flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
             {sessions.length === 0 && (
               <div className="px-3 text-xs text-[#71717A] italic py-2">No chats yet</div>
@@ -614,10 +791,10 @@ export function ChatPage() {
             <div className="flex items-center gap-2.5">
               {/* Avatar circle */}
               <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold text-white uppercase">
-                {displayName.charAt(0)}
+                {(user?.name || displayName).charAt(0)}
               </div>
               <div className="grid leading-tight">
-                <span className="text-xs font-semibold text-white truncate max-w-[140px]">{displayName}</span>
+                <span className="text-xs font-semibold text-white truncate max-w-[140px]">{user?.name || displayName}</span>
               </div>
             </div>
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4 w-4 text-[#A1A1AA]">
@@ -631,7 +808,10 @@ export function ChatPage() {
           {showProfileMenu && (
             <div className="absolute bottom-16 left-3 right-3 rounded-lg border border-[#27272A] bg-[#18181B] p-1.5 shadow-2xl z-50">
               <button
-                onClick={logout}
+                onClick={() => {
+                  logout()
+                  setIsMobileSidebarOpen(false)
+                }}
                 className="flex items-center w-full px-3 py-2 rounded-md text-sm text-[#EF4444] hover:bg-neutral-800 font-semibold transition-colors"
               >
                 Sign out
@@ -646,44 +826,23 @@ export function ChatPage() {
         {/* Top Header Bar */}
         <header className="flex items-center justify-between px-5 h-[56px] select-none">
           <div className="flex items-center gap-1.5">
-            <button className="flex items-center gap-1 text-sm font-semibold text-[#A1A1AA] hover:text-white transition-colors">
-              <span>chadgpt</span>
-              <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-3 w-3 mt-0.5">
-                <polyline points="6 9 12 15 18 9"></polyline>
+            {/* Hamburger menu button for mobile */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-1.5 hover:bg-[#1C1C1E] rounded-md transition-colors text-[#A1A1AA] hover:text-white cursor-pointer mr-1"
+            >
+              <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-5 w-5">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#FAFAFA] select-none">
+              <img src={logoImg} alt="CHAD GPT Logo" className="h-5 w-5 object-contain rounded-md" />
+              <span>chadgpt</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {messages.length > 0 && (
-              <>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#18181B] border border-[#27272A] hover:bg-[#27272A] rounded-full text-xs font-semibold text-white transition-colors">
-                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                  </svg>
-                  <span>Share</span>
-                </button>
-                <button className="p-1.5 bg-[#18181B] border border-[#27272A] hover:bg-[#27272A] rounded-full text-white transition-colors">
-                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-3.5 w-3.5">
-                    <circle cx="12" cy="12" r="1"></circle>
-                    <circle cx="19" cy="12" r="1"></circle>
-                    <circle cx="5" cy="12" r="1"></circle>
-                  </svg>
-                </button>
-              </>
-            )}
-            {!messages.length && (
-              <div className="h-8 w-8 rounded-full bg-[#18181B] border border-[#27272A] flex items-center justify-center">
-                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" className="h-4 w-4 text-[#A1A1AA]">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-              </div>
-            )}
-          </div>
         </header>
 
         {/* Message stream / Greeting Container */}
@@ -700,18 +859,21 @@ export function ChatPage() {
               </h2>
               {/* Centered Composer */}
               <div className="w-full max-w-[720px] mt-6">
-                <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2 focus-within:border-zinc-500 transition-colors">
-                  <input
-                    type="text"
+                <form onSubmit={handleSend} className="relative flex items-end bg-[#18181B] rounded-[24px] border border-[#27272A] pl-4 pr-2 py-2 focus-within:border-zinc-500 transition-colors">
+                  <textarea
+                    ref={inputRef}
+                    rows={1}
                     placeholder="Ask anything"
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1"
+                    onChange={handleInputChange}
+                    onKeyDown={handleInputKeyDown}
+                    className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1.5 resize-none overflow-y-auto max-h-[200px] scrollbar-thin"
+                    style={{ height: 'auto' }}
                   />
                   <button 
                     type="submit" 
                     disabled={!input.trim() || isStreaming}
-                    className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed mb-0.5"
                   >
                     <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4 w-4">
                       <line x1="12" y1="19" x2="12" y2="5"></line>
@@ -761,18 +923,21 @@ export function ChatPage() {
         {messages.length > 0 && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black to-transparent pt-10 pb-6 px-4">
             <div className="w-full max-w-[720px] mx-auto">
-              <form onSubmit={handleSend} className="relative flex items-center bg-[#18181B] rounded-full border border-[#27272A] px-4 py-2 focus-within:border-zinc-500 transition-colors">
-                <input
-                  type="text"
+              <form onSubmit={handleSend} className="relative flex items-end bg-[#18181B] rounded-[24px] border border-[#27272A] pl-4 pr-2 py-2 focus-within:border-zinc-500 transition-colors">
+                <textarea
+                  ref={inputRef}
+                  rows={1}
                   placeholder="Ask anything"
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1"
+                  onChange={handleInputChange}
+                  onKeyDown={handleInputKeyDown}
+                  className="flex-1 bg-transparent border-none text-[15px] outline-none text-white placeholder-[#71717A] px-3 py-1.5 resize-none overflow-y-auto max-h-[200px] scrollbar-thin"
+                  style={{ height: 'auto' }}
                 />
                 <button 
                   type="submit" 
                   disabled={!input.trim() || isStreaming}
-                  className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center disabled:bg-zinc-800 disabled:text-zinc-600 transition-colors cursor-pointer disabled:cursor-not-allowed mb-0.5"
                 >
                   <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" className="h-4.5 w-4.5">
                     <line x1="12" y1="19" x2="12" y2="5"></line>

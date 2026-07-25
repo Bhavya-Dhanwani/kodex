@@ -18,6 +18,10 @@ class MessageDAO {
         return MessageModel.find({ conversation: conversationId }).sort({ createdAt: 1 });
     }
 
+    async deleteMessagesByConversation(conversationId: string): Promise<void> {
+        await MessageModel.deleteMany({ conversation: conversationId });
+    }
+
 }
 
 export const messageDao = new MessageDAO();

@@ -11,4 +11,7 @@ export const chatService = {
   createSession(message) {
     return httpClient.post('/chat/session/create', { message })
   },
+  deleteSession(conversationId) {
+    return httpClient.delete(`/chat/conversation/${conversationId}`)
+  },
 }
