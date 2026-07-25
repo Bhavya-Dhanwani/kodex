@@ -12,6 +12,7 @@ const envConstants = {
     SMTP_PASS: "",
     MAIL_FROM: "noreply@chatgpt-clone.local",
     SEND_MAIL: false,
+    EMAIL_VERIFICATION: false,
 }
 
 export default envConstants;

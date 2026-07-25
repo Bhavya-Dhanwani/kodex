@@ -15,4 +15,5 @@ export type AppEnv = {
   MAIL_FROM: string;
   LOGGER_LEVEL: string;
   SEND_MAIL: boolean;
+  EMAIL_VERIFICATION: boolean;
 };

@@ -23,6 +23,7 @@ const envSchema = zod.object({
   SMTP_PASS: zod.string().default(envConstants.SMTP_PASS),
   MAIL_FROM: zod.string().default(envConstants.MAIL_FROM),
   SEND_MAIL: zod.preprocess((val) => val === 'true' || val === '1' || val === true, zod.boolean()).default(envConstants.SEND_MAIL),
+  EMAIL_VERIFICATION: zod.preprocess((val) => val === 'true' || val === '1' || val === true, zod.boolean()).default(envConstants.EMAIL_VERIFICATION),
   LOGGER_LEVEL: zod.string().default(envConstants.LOGGER_LEVEL),
 });
 
