@@ -3,11 +3,12 @@ import express from "express";
 import morgan from "morgan";
 import { ApiError } from "../utils/api-error";
 import { router } from "../routes";
+import env from "../config/env";
 
 
 export const app = express();
 
-app.use(morgan("dev"));
+app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
