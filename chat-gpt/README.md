@@ -31,8 +31,8 @@ SMTP_PORT=1025
 SMTP_USER=
 SMTP_PASS=
 MAIL_FROM=noreply@chatgpt-clone.local
-SEND_MAIL=false
-EMAIL_VERIFICATION=true
+SEND_MAIL=false           # Set to true to send actual emails via SMTP. If false, verification/reset codes are logged directly to the server terminal.
+EMAIL_VERIFICATION=true  # Set to true to require OTP verification for registration. If false, user accounts are auto-verified on creation.
 ```
 
 ### 2. Run Locally (Developer Mode)
