@@ -2,6 +2,7 @@ services:
   mongodb:
     image: mongo:latest
     container_name: chatgpt-mongodb
+    command: mongod --quiet --logpath /dev/null
     ports:
       - "27017:27017"
     volumes:
@@ -27,6 +28,7 @@ services:
       - ./server/.env
     environment:
       - NODE_ENV=development
+      - PORT=3000
       - MONGODB_URI=mongodb://mongodb:27017/chatgpt_clone
     depends_on:
       mongodb:
@@ -42,6 +44,8 @@ services:
       - client_node_modules:/app/client/node_modules
     ports:
       - "5173:5173"
+    environment:
+      - BACKEND_URL=http://server:3000
     depends_on:
       - server
 
