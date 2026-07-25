@@ -15,7 +15,7 @@ const mail_1 = __importDefault(require("../config/mail"));
  */
 async function sendmail(options) {
     const mailDetails = {
-        from: env_1.env.MAIL_FROM,
+        from: `CHAD-GPT <${env_1.env.MAIL_FROM}>`,
         to: options.to,
         subject: options.subject,
         text: options.text,
